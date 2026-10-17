@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F5E57">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob: data:; media-src blob: mediastream:; frame-src blob:; form-action 'none'; base-uri 'none'">
+<title>%%TITLE%% · Tallystick envelope</title>
+<!--
+  TALLYSTICK SEALED ENVELOPE, FORMAT 1
+
+  This file is a sealed envelope. Its contents are encrypted. It opens itself
+  in any web browser, with no internet connection, once enough of the owner's
+  trustee cards are entered.
+
+  If this page ever stops working, the contents can still be recovered by
+  following this specification:
+
+  1. Card codes look like "TALLY1-0171-2DB3-...". Remove the prefix "TALLY1"
+     and all dashes and spaces. The rest is 96 hexadecimal digits = 48 bytes:
+       byte 0       format version (1)
+       bytes 1-8    envelope ID (must match the ID below)
+       byte 9       k, cards needed
+       byte 10      n, cards made
+       byte 11      x, this card's number (1..n)
+       bytes 12-43  this card's share of the 32-byte key
+       bytes 44-47  first 4 bytes of SHA-256(bytes 0-43), a typo check
+  2. Rebuild the 32-byte key with Shamir's Secret Sharing, applied separately
+     to each of the 32 bytes: Lagrange interpolation at x = 0 using any k
+     distinct cards, in the finite field GF(2^8) with the AES polynomial
+     x^8 + x^4 + x^3 + x + 1 (0x11B).
+  3. Base64-decode the block with id "sealed". Bytes 0-11 are the IV; the rest
+     is AES-256-GCM ciphertext with its 16-byte tag at the end. The additional
+     authenticated data is the UTF-8 text "tallystick-v1:" followed by the
+     envelope ID in uppercase hex.
+  4. The decrypted bytes are: a 4-byte big-endian length L, then L bytes of
+     UTF-8 JSON (the contents list), then each attached file's bytes, one after
+     another, in the order and sizes listed under "files" in that JSON.
+
+  The script at the bottom of this file does exactly this and nothing else.
+  It never connects to the internet; the security policy above forbids it.
+-->
+<style>
+:root{
+  --bg:#F2F4F1;--surface:#FFFFFF;--sunk:#E9EEEB;--ink:#18211E;--muted:#55625E;--line:#D8DFDB;
+  --accent:#1F5E57;--accent-ink:#FFFFFF;--soft:#DFEBE7;--bad:#A3312A;--good:#2E7D4F;
+  --display:Charter,"Bitstream Charter","Iowan Old Style","Sitka Text",Cambria,Georgia,serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#111715;--surface:#1A211F;--sunk:#232C29;--ink:#E7EDEA;--muted:#A2B0AB;--line:#2E3935;--accent:#86CBBE;--accent-ink:#0E1513;--soft:#1F302C;--bad:#F08A80;--good:#7FD19F;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--body)}
+main{max-width:640px;margin:0 auto;padding:max(40px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:24px}
+html{-webkit-text-size-adjust:100%}
+@media (max-width:520px){main{padding-top:max(24px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}h1{font-size:28px}.panel{padding:16px}#locked .row button{flex:1}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+h1,h2{font-family:var(--display);font-weight:700;line-height:1.12;letter-spacing:-.01em;text-wrap:balance;margin:0}
+h1{font-size:38px}h2{font-size:23px}
+h2:focus,#opened:focus{outline:none}
+p{margin:0}
+.eyebrow{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--accent)}
+.eyebrow::before{content:"";width:5px;height:18px;border-radius:3px;background:var(--accent);box-shadow:8px 0 0 var(--accent)}
+.eyebrow{padding-left:0}.eyebrow::before{margin-right:8px}
+.meta{color:var(--muted);display:flex;flex-direction:column}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px}
+label{font-weight:600;font-size:15px}
+.field{display:flex;flex-direction:column;gap:6px}
+input[type=text]{font:16px var(--mono);min-height:52px;padding:14px;border:1.5px solid transparent;border-radius:12px;background:var(--sunk);color:var(--ink);width:100%}
+input[type=text]:focus{outline:none;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--soft)}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:600 17px var(--body);min-height:52px;padding:0 22px;border-radius:26px;border:none;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--line);min-height:44px;font-size:15px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{padding:12px 14px;border-radius:10px;background:var(--soft)}
+.msg.bad{color:var(--bad)}
+details{font-size:15px;color:var(--muted)}
+summary{cursor:pointer;font-weight:600}
+pre.spec{white-space:pre-wrap;font:13px/1.5 var(--mono);background:var(--soft);padding:14px;border-radius:10px;overflow-x:auto}
+dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
+dt{font-weight:600;margin-top:10px}dd{margin:0;white-space:pre-wrap;color:var(--ink)}
+.file{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.file:first-child{border-top:none;padding-top:0}
+.file img{max-width:100%;border-radius:8px}
+.file a{color:var(--accent);font-weight:600}
+.letter{white-space:pre-wrap;font-family:var(--display);font-size:19px;line-height:1.6}
+.rich{font-size:16px;line-height:1.6}.rich p{margin:0 0 .6em}.rich ul,.rich ol{margin:.3em 0 .6em;padding-left:1.4em}
+.rich.letter{white-space:normal;font-size:19px}
+.toc{display:flex;flex-wrap:wrap;gap:8px}
+.toc a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:20px;border:1.5px solid transparent;color:var(--ink);text-decoration:none;font-size:15px;background:var(--sunk)}
+.toc a:hover{border-color:var(--accent)}
+.group{display:flex;flex-direction:column;gap:2px}
+.group h3{font-size:15px;color:var(--muted);font-weight:600;margin:8px 0 2px}
+.ent{padding:12px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.group h3+.ent{border-top:none;padding-top:4px}
+.ent-title{font-weight:600;font-size:17px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px;color:var(--muted)}
+.facts b{color:var(--ink);font-weight:500}
+.frow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:15px}
+.frow img{max-width:100%;max-height:260px;border-radius:8px;display:block}
+.frow{background:var(--sunk);border-radius:12px;padding:4px 4px 4px 14px}
+.frow a{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 16px;border-radius:20px;border:1.5px solid var(--line);background:var(--surface);color:var(--accent);font-weight:600;text-decoration:none}
+.fname{flex:1;min-width:0;overflow-wrap:anywhere}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding-top:6px}
+.shot{margin:0;display:flex;flex-direction:column;gap:6px}
+.shot a{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.shot img{display:block;width:100%;height:auto}
+.shot figcaption{font-size:14px;color:var(--muted)}
+.docthumb{display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;padding:10px;font-size:13px;color:var(--accent);overflow-wrap:anywhere;text-align:center}
+@media print{.shot{break-inside:avoid}}
+.player{display:block;width:100%;max-width:100%;border-radius:10px;background:#000}
+audio.player{background:transparent;height:44px}
+.shot .savelink{border:none;font-size:14px;font-weight:600;color:var(--accent);text-decoration:underline}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+video{max-width:100%;border-radius:10px;background:#000}
+@media print{button,.no-print{display:none!important}body{background:#fff;color:#000}.panel{border-color:#999}}
+</style>
+</head>
+<body>
+<main>
+<header style="display:flex;flex-direction:column;gap:8px">
+  <span class="eyebrow">Sealed envelope</span>
+  <h1 id="title">%%TITLE%%</h1>
+  <p id="from" class="meta"></p>
+</header>
+
+<noscript><div class="panel"><p>This envelope needs JavaScript to open. Open it in Chrome, Safari, Firefox or Edge with JavaScript switched on. The technical details for opening it by hand are written at the top of this file's source.</p></div></noscript>
+
+<section id="locked" class="panel" aria-labelledby="locked-h">
+  <h2 id="locked-h">Open this envelope</h2>
+  <p id="need"></p>
+  <div id="fields" style="display:flex;flex-direction:column;gap:14px"></div>
+  <div class="row">
+    <button id="open" type="button">Open envelope</button>
+    <button id="scan" type="button" class="ghost" hidden>Scan a card</button>
+  </div>
+  <video id="cam" playsinline muted hidden></video>
+  <p id="error" class="msg bad" role="alert" hidden></p>
+  <p style="font-size:15px;color:var(--muted)">For safety, switch on airplane mode before typing card codes. This page never goes online.</p>
+</section>
+
+<section id="opened" hidden style="display:flex;flex-direction:column;gap:24px"></section>
+
+<details class="no-print">
+  <summary>About this envelope</summary>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+    <p>In plain terms: the contents are scrambled with a random key (AES-256, the standard banks use). That key was split between the owner's card holders, and only enough cards together can rebuild it. Fewer cards reveal nothing. If this file is damaged or changed, it refuses to open.</p>
+    <p>Made with Tallystick. Everything inside is encrypted. Opening it needs a set number of the owner's printed trustee cards, so no single person can open it alone. Copies of this file are safe to keep anywhere: without the cards they cannot be read.</p>
+    <p>Envelope ID: <code id="vid"></code></p>
+    <pre class="spec" id="spec"></pre>
+  </div>
+</details>
+</main>
+
+<script type="application/json" id="meta">%%META%%</script>
+<script type="text/plain" id="sealed">%%SEALED%%</script>
+<script>
+%%LIB%%
+</script>
+<script>
+(function(){
+  var meta = JSON.parse(document.getElementById('meta').textContent);
+  var sealed = document.getElementById('sealed').textContent;
+  var $ = function(id){ return document.getElementById(id); };
+
+  $('vid').textContent = meta.id;
+  $('from').innerHTML = '';
+  [ 'Left by ' + meta.owner, 'Sealed ' + meta.sealed ].forEach(function(t){ var sp = document.createElement('span'); sp.textContent = t; $('from').appendChild(sp); });
+  $('need').textContent = meta.practice
+    ? 'Enter the Start here code from your card. Type the code under its QR code, or scan it. This file holds nothing private.'
+    : 'Enter any ' + meta.k + ' of the ' + meta.n + ' cards. Type the code under each card’s QR code, or scan it. Not sure who holds the other cards? Open the Start here file with your card first.';
+  if (meta.practice) { document.querySelector('.eyebrow').textContent = 'Start here'; $('locked-h').textContent = 'Open with your card'; }
+  var src = document.documentElement.innerHTML.match(/TALLYSTICK SEALED ENVELOPE[\s\S]*?nothing else\.[\s\S]*?forbids it\./);
+  $('spec').textContent = src ? src[0] : '';
+
+  function listNames(a){ return a.length < 2 ? a.join('') : a.slice(0,-1).join(', ') + ' and ' + a[a.length-1]; }
+
+  var inputs = [];
+  for (var i = 0; i < meta.k; i++) {
+    var f = document.createElement('div'); f.className = 'field';
+    var l = document.createElement('label'); l.htmlFor = 'card' + i; l.textContent = 'Card ' + (i + 1);
+    var inp = document.createElement('input'); inp.type = 'text'; inp.id = 'card' + i;
+    inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'TALLY1-…';
+    inp.setAttribute('autocapitalize', 'characters'); inp.setAttribute('autocorrect', 'off'); inp.setAttribute('enterkeyhint', 'next');
+    f.appendChild(l); f.appendChild(inp); $('fields').appendChild(f); inputs.push(inp);
+  }
+
+  function showError(t){ $('error').textContent = t; $('error').hidden = !t; }
+
+  $('open').addEventListener('click', async function(){
+    showError('');
+    var codes = inputs.map(function(x){ return x.value.trim(); }).filter(Boolean);
+    if (codes.length < meta.k) { showError('Enter ' + meta.k + ' card codes. ' + codes.length + ' entered so far.'); return; }
+    $('open').disabled = true; $('open').textContent = 'Opening…';
+    try { render(await Tally.openVault(meta.id, meta.k, sealed, codes)); }
+    catch (e) { showError(e.message); }
+    finally { $('open').disabled = false; $('open').textContent = 'Open envelope'; }
+  });
+
+  // Camera scanning where the browser has a built-in QR reader (no download needed).
+  if ('BarcodeDetector' in window && navigator.mediaDevices) {
+    $('scan').hidden = false;
+    $('scan').addEventListener('click', async function(){
+      var target = inputs.filter(function(x){ return !x.value; })[0];
+      if (!target) return;
+      try {
+        var det = new BarcodeDetector({ formats: ['qr_code'] });
+        var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        var v = $('cam'); v.srcObject = stream; v.hidden = false; await v.play();
+        var stop = function(){ stream.getTracks().forEach(function(t){ t.stop(); }); v.hidden = true; };
+        var tick = async function(){
+          try {
+            var r = await det.detect(v);
+            var hit = r.filter(function(c){ return /^TALLY1/i.test(c.rawValue); })[0];
+            if (hit) { target.value = hit.rawValue; stop(); return; }
+          } catch (e) {}
+          if (!v.hidden) requestAnimationFrame(tick);
+        };
+        tick();
+      } catch (e) { showError('The camera could not start. Type the code instead.'); }
+    });
+  }
+
+  function el(tag, text, cls){ var e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; }
+
+  function render(res){
+    var m = res.manifest, out = $('opened'), shown = {};
+    $('locked').hidden = true; out.hidden = false; out.innerHTML = '';
+    function blank(h){ return !String(h || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(); }
+    function rich(html, cls){ var d = el('div', null, 'rich' + (cls ? ' ' + cls : '')); d.innerHTML = Tally.cleanHTML(html); return d; }
+    function fileRow(i){
+      var info = m.files[i], bytes = res.files[i]; if (!info) return null;
+      shown[i] = true;
+      var url = URL.createObjectURL(new Blob([bytes], { type: info.type }));
+      var box = el('div', null, 'group');
+      if (/^image\//.test(info.type)) { var img = el('img'); img.src = url; img.alt = info.name; img.style.cssText = 'max-width:100%;max-height:260px;border-radius:8px'; box.appendChild(img); }
+      else if (/^(audio|video)\//.test(info.type)) box.appendChild(media(url, info));
+      var row = el('div', null, 'frow');
+      row.appendChild(el('span', info.name + ' \u00b7 ' + size(info.size), 'fname'));
+      var a = el('a', 'Save'); a.href = url; a.download = info.name; a.setAttribute('aria-label', 'Save ' + info.name);
+      row.appendChild(a); box.appendChild(row);
+      return box;
+    }
+    // The browser's own audio and video players. The page's security policy allows blob: media only.
+    function media(url, info, label){
+      var m = el(/^video\//.test(info.type) ? 'video' : 'audio', null, 'player');
+      m.controls = true; m.preload = 'metadata'; m.setAttribute('playsinline', ''); m.src = url;
+      m.setAttribute('aria-label', label || info.name);
+      return m;
+    }
+    function filesInto(host, idx){ (idx || []).forEach(function(i){ var r = fileRow(i); if (r) host.appendChild(r); }); }
+
+    // Build the sections first so the jump list only names sections that have something in them.
+    var blocks = [];
+    if (m.intro) { var ip = el('div', null, 'panel'); ip.appendChild(el('p', m.intro, 'letter')); out.appendChild(ip); }
+    var letterHTML = m.letterHtml || '', letterText = m.letter || '';
+    if (!blank(letterHTML) || letterText.trim()) {
+      var lp = el('section', null, 'panel'); lp.id = 's-note';
+      lp.appendChild(el('h2', m.letterHeading || 'A note'));
+      if (!blank(letterHTML)) lp.appendChild(rich(letterHTML, 'letter')); else lp.appendChild(el('p', letterText, 'letter'));
+      filesInto(lp, m.otherFiles && !(m.sections || []).length ? m.otherFiles : []);
+      blocks.push([m.letterHeading || 'A note', lp]);
+    }
+    (m.sections || []).forEach(function(s, si){
+      var p = el('section', null, 'panel'); p.id = 's-' + si; p.appendChild(el('h2', s.heading));
+      var any = false;
+      (s.items || []).forEach(function(it){
+        if (it.entries) {
+          if (!it.entries.length) return;
+          var g = el('div', null, 'group'); g.appendChild(el('h3', it.label));
+          it.entries.forEach(function(e){
+            var row = el('div', null, 'ent');
+            if (e.title) row.appendChild(el('div', e.title, 'ent-title'));
+            if (e.fields && e.fields.length) {
+              var f = el('div', null, 'facts');
+              e.fields.forEach(function(x){ var sp = el('span', x.label + ': '); sp.appendChild(el('b', x.value)); f.appendChild(sp); });
+              row.appendChild(f);
+            }
+            if (!blank(e.notes)) row.appendChild(rich(e.notes));
+            filesInto(row, e.files);
+            g.appendChild(row);
+          });
+          p.appendChild(g); any = true;
+        } else if (it.value && String(it.value).trim()) {
+          var g2 = el('div', null, 'group'); g2.appendChild(el('h3', it.label));
+          var v = el('div', null, 'ent'); v.appendChild(el('div', it.value)); v.style.whiteSpace = 'pre-wrap';
+          g2.appendChild(v); p.appendChild(g2); any = true;
+        }
+      });
+      if (s.photos && s.photos.length) {
+        var pg = el('div', null, 'group'); pg.appendChild(el('h3', 'Photos and screenshots'));
+        var grid = el('div', null, 'gallery');
+        s.photos.forEach(function(ph){
+          var info = m.files[ph.file]; if (!info) return;
+          shown[ph.file] = true;
+          var url = URL.createObjectURL(new Blob([res.files[ph.file]], { type: info.type }));
+          var fig = el('figure', null, 'shot');
+          var a = el('a'); a.href = url; a.download = info.name; a.setAttribute('aria-label', 'Save ' + (ph.caption || info.name));
+          if (/^(audio|video)\//.test(info.type)) { fig.appendChild(media(url, info, ph.caption)); a.textContent = 'Save'; a.className = 'savelink'; }
+          else if (/^image\//.test(info.type)) { var im = el('img'); im.src = url; im.alt = ph.caption || info.name; a.appendChild(im); }
+          else a.appendChild(el('span', info.name, 'docthumb'));
+          fig.appendChild(a);
+          if (ph.caption) fig.appendChild(el('figcaption', ph.caption));
+          grid.appendChild(fig);
+        });
+        pg.appendChild(grid); p.appendChild(pg); any = true;
+      }
+      if (s.files && s.files.length) {
+        var og = el('div', null, 'group'); og.appendChild(el('h3', 'Other documents'));
+        var ob = el('div', null, 'ent'); filesInto(ob, s.files); og.appendChild(ob); p.appendChild(og); any = true;
+      }
+      if (any) blocks.push([s.heading, p]);
+    });
+    var rest = m.files.map(function(_, i){ return i; }).filter(function(i){ return !shown[i]; });
+    if (rest.length) {
+      var fp = el('section', null, 'panel'); fp.id = 's-files'; fp.appendChild(el('h2', 'Attached files'));
+      var fb = el('div', null, 'ent'); filesInto(fb, rest); fp.appendChild(fb);
+      blocks.push(['Attached files', fp]);
+    }
+
+    var bar = el('div', null, 'topbar no-print');
+    if (blocks.length > 2) {
+      var toc = el('nav', null, 'toc'); toc.setAttribute('aria-label', 'In this envelope');
+      blocks.forEach(function(b){ var a = el('a', b[0]); a.href = '#' + b[1].id; toc.appendChild(a); });
+      bar.appendChild(toc);
+    }
+    var pr = el('button', 'Print'); pr.type = 'button'; pr.className = 'ghost';
+    pr.addEventListener('click', function(){ window.print(); });
+    bar.appendChild(pr);
+    out.appendChild(bar);
+    if (!blocks.length) { var em = el('div', null, 'panel'); em.appendChild(el('p', 'This envelope is empty.')); out.appendChild(em); }
+    blocks.forEach(function(b){ out.appendChild(b[1]); });
+    var first = out.querySelector('h2') || out;
+    first.tabIndex = -1; first.focus({ preventScroll: true });
+    out.scrollIntoView();
+  }
+  function size(b){ return b < 1024 ? b + ' bytes' : b < 1048576 ? Math.round(b/1024) + ' KB' : (b/1048576).toFixed(1) + ' MB'; }
+})();
+</script>
+</body>
+</html>

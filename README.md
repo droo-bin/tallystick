@@ -1,0 +1,58 @@
+# Tallystick
+
+Leave your affairs in order, sealed for the people you trust. Free, private, offline.
+
+## Two ways to use it
+
+- **`dist/tallystick.html`**: one file. Open it in any browser, even with no internet. It blocks all network access.
+- **`dist/pwa/`**: the same app as an installable web app. Host the folder on any static host and people can add it to their home screen. It works offline once opened.
+
+## Hosting the PWA (free)
+
+The folder must be served over HTTPS (any real host does this).
+
+- **GitHub Pages:** handled automatically by the GitHub Actions workflow below.
+- **Cloudflare Pages / Netlify:** drag the `dist/pwa` folder into a new project.
+
+Nothing is ever sent to the host: the service worker only serves the app's own files.
+
+## Publishing with GitHub Actions
+
+`.github/workflows/publish.yml` builds the app and runs every test on each push and pull request.
+
+- **Pushes to `main`** publish the installable app to GitHub Pages, with the single offline file at `/tallystick.html`.
+  One-time setup: in the repo, go to Settings › Pages and set Source to **GitHub Actions**.
+- **Tags like `v1.0.0`** also create a GitHub release with `tallystick.html` and its SHA-256 checksum attached:
+  `git tag v1.0.0 && git push origin v1.0.0`
+
+## Building and testing
+
+```
+node build.js                                        # builds dist/tallystick.html and dist/pwa/
+node --test test/crypto.test.js                      # crypto core (no installs needed)
+python3 -m unittest discover -s test -p "test_*.py"  # browser tests
+```
+
+The browser tests need `pip install playwright pillow numpy opencv-python-headless` and
+`python3 -m playwright install chromium`. They build the app, serve the installable version locally and
+drive both builds in a headless browser.
+
+| File | What it covers |
+| --- | --- |
+| `test/crypto.test.js` | Key splitting, card codes, sealing and opening, typo and damage detection |
+| `test/test_creating.py` | Filling things in: suggestions, photos, autofill, choosing how many cards |
+| `test/test_sealing.py` | Sealing a household and opening every envelope, on both builds |
+| `test/test_handing_out.py` | Share and Save menus, with and without a share sheet |
+| `test/test_saving_progress.py` | Surviving a refresh, Start over, and the history of sealed envelopes |
+| `test/test_media.py` | Voice notes and videos play while drafting and in opened envelopes |
+| `test/test_accessibility.py` | Keyboard use, focus, headings, names and announcements |
+| `test/test_installable_app.py` | Install metadata, offline use and phone layout |
+| `test/test_qr.py` | QR codes decode with an independent reader |
+
+Shared helpers live in `test/support/`: `app.py` (builds, browser, local server), `pages.py`
+(page objects for the app, finish screen and envelopes), `data.py` (test households and files),
+`fixtures.py` (base test classes) and `a11y.py` (accessibility checks).
+
+## Not a will
+
+Tallystick records information and wishes. It does not replace a legally valid will.

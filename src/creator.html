@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="%%CSP%%">
+<meta name="theme-color" content="#1F5E57">
+<meta name="description" content="Leave your affairs in order, sealed for the people you trust. Free, private, works offline.">
+<title>Tallystick</title>
+%%HEAD_EXTRA%%
+<!-- Tallystick: leave your affairs in order, sealed for the people you trust.
+     Works offline. Nothing you type leaves this computer: the security policy above forbids all network access. -->
+<style>
+%%CSS%%
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <span class="brand"><svg width="24" height="24" viewBox="0 0 28 28" aria-hidden="true"><rect x="6" y="3" width="7" height="22" rx="2" fill="var(--accent)"/><rect x="15" y="3" width="7" height="22" rx="2" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>Tallystick</span>
+    <div class="steps"><span id="steps" aria-live="polite"></span><ol class="notches" id="notches" aria-hidden="true"><li></li><li></li><li></li><li></li></ol></div>
+  </div>
+</header>
+
+<a class="skip" href="#main">Skip to content</a>
+<main id="main" tabindex="-1">
+<div class="resumed" id="resumed" hidden role="status">
+  <span id="resumed-text"></span>
+  <button type="button" class="link" id="start-over">Start over</button>
+</div>
+<!-- 0. Welcome -->
+<section class="screen" id="screen-0">
+  <div class="intro">
+    <h1>Leave things in order for the people you trust</h1>
+    <p class="lede">Write down what your family would need to know, then seal it. It only opens when enough of the people you choose bring their cards together.</p>
+  </div>
+  <ol class="how">
+    <li><span class="tally" aria-hidden="true"><i></i></span><div><strong>Write it down</strong><span>Accounts, policies, wishes and where things are. Tap to add, skip what you don't know.</span></div></li>
+    <li><span class="tally" aria-hidden="true"><i></i><i></i></span><div><strong>Choose your card holders</strong><span>Each gets a card. No one can open it alone.</span></div></li>
+    <li><span class="tally" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>Seal it</strong><span>Keep copies anywhere. It opens when enough cards come together.</span></div></li>
+  </ol>
+  <div class="panel">
+    <div class="field"><label for="owner">Your full name</label><input type="text" id="owner" class="big-input" autocomplete="name" autocapitalize="words" placeholder="e.g. Sam Taylor"></div>
+    <div class="facts"><span>Stays on this device</span><span>No account</span><span>Free</span><span>About 20 minutes</span></div>
+  </div>
+  <p class="hint" id="draft-hint">Your answers are kept on this device as you go, so you can close this page and come back. They're deleted once you seal.</p>
+  <section class="panel" id="history" hidden aria-labelledby="history-h">
+    <h2 id="history-h" tabindex="-1">Envelopes you've sealed</h2>
+    <div class="history" id="history-list"></div>
+    <p class="hint">Cards aren't kept here. They're the keys, so only your card holders have them. To change anything, make new envelopes: new cards replace all the old ones.</p>
+  </section>
+  <div class="panel" id="install" hidden>
+    <strong>Install Tallystick</strong>
+    <p class="hint" id="install-text"></p>
+    <div><button type="button" id="install-btn" class="ghost" hidden>Install app</button></div>
+  </div>
+</section>
+
+<!-- 1. Affairs -->
+<section class="screen" id="screen-1" hidden>
+  <div class="intro">
+    <h1>Your affairs</h1>
+    <p class="lede">Tap what applies to you, then add a detail or two. Write where to find things, not passwords.</p>
+  </div>
+  <div id="sections" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div class="panel">
+    <div class="field"><span class="label">A note for whoever opens this <span class="hint">(optional)</span></span><div id="affairs-letter"></div></div>
+    <div class="field"><span class="label">Any other documents <span class="hint">(optional)</span></span>
+      <div><label class="small" for="affairs-files"><span aria-hidden="true">+</span> Attach files<input type="file" id="affairs-files" class="vh" multiple></label></div><div class="files" id="affairs-filelist"></div></div>
+  </div>
+</section>
+
+<!-- 2. People -->
+<section class="screen" id="screen-2" hidden>
+  <div class="intro">
+    <h1>Who should hold the cards?</h1>
+    <p class="lede">Each person gets a card. No one can open your envelope alone: it takes several of them together.</p>
+  </div>
+  <details class="aside" open>
+    <summary>How to choose</summary>
+    <ul class="tips">
+      <li><strong>People you'd trust with your will.</strong> They will see everything in the envelope.</li>
+      <li><strong>Spread them across households.</strong> If everyone lives together, they could open it early, and one house fire could lose every card.</li>
+      <li><strong>Someone likely to outlive you,</strong> and someone organised who will actually act.</li>
+      <li><strong>Your executor or solicitor</strong> already has a duty to handle your affairs.</li>
+      <li><strong>Tell them.</strong> A card nobody knows about is a card nobody uses.</li>
+    </ul>
+  </details>
+  <div class="panel">
+    <h2>Card holders</h2>
+    <div id="people" class="people"></div>
+    <div><button type="button" class="ghost" id="add-person">Add a person</button></div>
+  </div>
+  <div class="panel kpick" id="k-panel">
+    <div class="khead"><h2 id="k-label">Cards needed to open it</h2><span class="big-k" id="k-big"></span></div>
+    <div class="sticks" id="k" role="group" aria-labelledby="k-label"></div>
+    <p id="k-explain" aria-live="polite"></p>
+  </div>
+  <div id="people-hints" aria-live="polite" style="display:flex;flex-direction:column;gap:8px"></div>
+</section>
+
+<!-- 3. Extra envelopes -->
+<section class="screen" id="screen-3" hidden>
+  <div class="intro">
+    <h1>Anything more private?</h1>
+    <p class="lede">Most people only need one envelope. Add another for something meant for fewer people, like a letter to one person.</p>
+  </div>
+  <div id="extras" style="display:flex;flex-direction:column;gap:14px"></div>
+  <div><button type="button" class="ghost" id="add-extra">Add an envelope</button></div>
+</section>
+
+<!-- 4. Copies -->
+<section class="screen" id="screen-4" hidden>
+  <div class="intro">
+    <h1>Where will you keep copies?</h1>
+    <p class="lede">Sealed envelopes are safe to copy anywhere: without the cards, nobody can read them. More places means they can't get lost.</p>
+  </div>
+  <div class="panel">
+    <h2>Tick where copies will go</h2>
+    <div class="checks" id="copy-places"></div>
+    <div class="field"><label for="copies-other">Anywhere else? <span class="hint">(optional)</span></label><input type="text" id="copies-other" placeholder="e.g. In the grey filing cabinet, top drawer"></div>
+  </div>
+  <p class="hint">We'll also make a contents list, which says what envelopes exist, how many cards each needs and where the copies are. It holds no private details.</p>
+</section>
+
+<!-- 5. Sealed -->
+<section class="screen" id="screen-5" hidden>
+  <div class="hero">
+    <span class="tick" id="hero-tick" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></span>
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+      <h1 id="done-h">Sealing your envelopes</h1>
+      <p id="done-sub" class="hint" role="status"></p>
+    </div>
+  </div>
+  <details class="quiet" id="checks-wrap">
+    <summary>How we checked</summary>
+    <p class="hint">Each finished file was opened from scratch with every combination of cards, and its contents compared byte for byte with what you wrote.</p>
+    <div id="checks"></div>
+  </details>
+
+  <div class="panel tasks" id="tasks" hidden>
+    <div class="task" id="task-save">
+      <span class="num">1</span>
+      <div class="body">
+        <h2>Save your envelopes</h2>
+        <p>Put copies in the places you chose. Each file opens itself in any web browser.</p>
+        <div id="save-envelopes"></div>
+      </div>
+    </div>
+    <div class="task" id="task-print">
+      <span class="num">2</span>
+      <div class="body" id="cards-wrap">
+        <h2>Print the cards</h2>
+        <p id="cards-sub"></p>
+        <div class="row"><button type="button" id="print-cards">Print cards</button><button type="button" class="ghost" id="save-cards">Save cards as a file</button></div>
+        <details class="more"><summary>Preview the cards</summary><div class="cards" id="cards"></div></details>
+      </div>
+    </div>
+    <div class="task" id="task-give">
+      <span class="num">3</span>
+      <div class="body">
+        <h2>Hand them out</h2>
+        <p>Give each person their card and tell them what it's for. Then close this page: the cards are the only copies of the keys.</p>
+        <div class="sendlist" id="send-list"></div>
+        <p class="hint"><span id="share-info" hidden>Share sends a person their files through any app on your device. </span>Printed cards are safest: a card sent as a message stays in that inbox, so only send it to people whose accounts you trust.</p>
+        <p class="hint">Ask each person to try their card on the <strong>Start here</strong> file. Any one card opens it, and it holds nothing private, so they can do it alone, now and once a year.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<details class="explain" id="how-safe">
+  <summary><h2>How your envelopes are protected</h2></summary>
+  <div class="explain-body">
+    <section>
+      <h3>It's locked with a key only your cards can rebuild</h3>
+      <p>When you seal an envelope, Tallystick makes a long random key and uses it to scramble everything inside. It uses AES-256, the same kind of encryption banks and governments rely on. Without the key, the file is meaningless noise. Guessing the key would take every computer on Earth far longer than the age of the universe.</p>
+    </section>
+    <section>
+      <h3>The key is split between your card holders</h3>
+      <p>The key is never written down whole. It's cut into pieces, one per card, using a well-tested method called Shamir's secret sharing. Think of a map torn so that any three pieces show the way, but two pieces show nothing at all. Fewer cards than you chose don't reveal part of the secret. They reveal nothing.</p>
+    </section>
+    <section>
+      <h3>Nothing leaves your device</h3>
+      <p>There's no account and no server. Everything is done in your browser, and the app is built so it can't connect to the internet. Nobody else can open your envelopes, including the people who made Tallystick.</p>
+    </section>
+    <section>
+      <h3>Mistakes and damage are caught</h3>
+      <p>Each card code has a built-in check, so a typo is spotted straight away. If an envelope file is damaged or changed, it refuses to open rather than show the wrong thing. Before you see your cards, every combination of them is tested against the finished files.</p>
+    </section>
+    <section>
+      <h3>What it can't protect against</h3>
+      <ul>
+        <li>Enough card holders agreeing to open it early. Choose people you trust, in different households.</li>
+        <li>Losing more cards than your spares. If too many are lost, nobody can ever open it.</li>
+        <li>Someone using this device while you're still filling it in. Your answers are kept here until you seal, then deleted.</li>
+      </ul>
+    </section>
+  </div>
+</details>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <button type="button" class="ghost" id="back">Back</button>
+    <span class="hint" id="foot-msg" role="status" aria-live="polite"></span>
+    <button type="button" id="next" disabled aria-describedby="foot-msg">Start</button>
+  </div>
+</footer>
+
+<script id="tally-lib">
+%%LIB%%
+</script>
+<script>
+%%QR%%
+</script>
+<script>
+var VAULT_TEMPLATE = %%TEMPLATE%%;
+</script>
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+function el(tag, attrs, kids){
+  var e = document.createElement(tag);
+  for (var k in (attrs || {})) {
+    if (k === 'text') e.textContent = attrs[k];
+    else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), attrs[k]);
+    else if (k === 'checked' || k === 'value' || k === 'disabled' || k === 'selected' || k === 'open') e[k] = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  (kids || []).forEach(function(c){ if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+  return e;
+}
+var uid = 0; function nid(){ return 'i' + (++uid); }
+
+/* ---------- what you write in the affairs envelope ----------
+   Each item is either a list (tap common choices to add entries) or a single entry.
+   Every entry can also take rich-text notes and its own files. */
+function T(label, placeholder){ return { label: label, type: 'text', placeholder: placeholder || '' }; }
+function C(label, options){ return { label: label, type: 'chips', options: options }; }
+var SECTIONS = [
+  { heading: 'Money', items: [
+    { label: 'Bank accounts', kind: 'list', nameLabel: 'Bank or building society',
+      suggest: ['Nationwide', 'Barclays', 'HSBC', 'Lloyds', 'NatWest', 'Santander', 'Halifax', 'Monzo', 'Starling', 'Chase', 'First Direct'],
+      fields: [C('Type', ['Current', 'Savings', 'Joint', 'Business'])] },
+    { label: 'Savings and investments', kind: 'list', nameLabel: 'What it is',
+      suggest: ['ISA', 'Premium Bonds', 'Shares', 'Crypto', 'Fixed-term savings'],
+      fields: [T('Held with', 'e.g. Vanguard, NS&I')] },
+    { label: 'Debts and credit', kind: 'list', nameLabel: 'What it is',
+      suggest: ['Mortgage', 'Credit card', 'Loan', 'Car finance', 'Student loan'],
+      fields: [T('Lender', 'e.g. Halifax')] }]},
+  { heading: 'Home and insurance', items: [
+    { label: 'Your home', kind: 'single',
+      fields: [C('Living arrangement', ['Own it outright', 'Own with a mortgage', 'Rent', 'Live with family']), T('Mortgage lender or landlord')] },
+    { label: 'Insurance', kind: 'list', nameLabel: 'Type of cover',
+      suggest: ['Life', 'Home', 'Contents', 'Car', 'Travel', 'Pet', 'Health'],
+      fields: [T('Insurer', 'e.g. Aviva')] },
+    { label: 'Bills', kind: 'list', nameLabel: 'Bill',
+      suggest: ['Energy', 'Water', 'Council tax', 'Broadband', 'Mobile', 'TV licence'],
+      fields: [T('Provider', 'e.g. Octopus Energy')] }]},
+  { heading: 'Pensions and work', items: [
+    { label: 'Pensions', kind: 'list', nameLabel: 'Pension',
+      suggest: ['Workplace pension', 'Old workplace pension', 'Private pension', 'SIPP', 'State pension'],
+      fields: [T('Provider', 'e.g. Nest, Aviva, Scottish Widows')] },
+    { label: 'Work', kind: 'single',
+      fields: [T('Employer'), T('HR or payroll contact'), C('Death-in-service benefit', ['Yes', 'No', 'Not sure'])] },
+    { label: 'Your own business', kind: 'list', nameLabel: 'Business name',
+      suggest: [], addLabel: 'Add a business',
+      fields: [C('Type', ['Limited company', 'Sole trader', 'Partnership']), T('Accountant')] }]},
+  { heading: 'Online life', items: [
+    { label: 'Devices', kind: 'list', nameLabel: 'Device',
+      suggest: ['iPhone', 'Android phone', 'Laptop', 'Desktop computer', 'Tablet'],
+      fields: [T('How to get in', 'A hint is fine, e.g. "code is in the blue notebook"')] },
+    { label: 'Password manager', kind: 'single',
+      fields: [C('Which one', ['1Password', 'Bitwarden', 'Apple Passwords', 'Google Password Manager', 'LastPass', 'None']), T('How your family can get in')] },
+    { label: 'Email and social media', kind: 'list', nameLabel: 'Account',
+      suggest: ['Gmail', 'Outlook', 'iCloud Mail', 'Facebook', 'Instagram', 'X', 'LinkedIn', 'TikTok'],
+      fields: [C('What to do', ['Close it', 'Memorialise it', 'Keep it running'])] },
+    { label: 'Subscriptions', kind: 'list', nameLabel: 'Subscription',
+      suggest: ['Netflix', 'Spotify', 'Amazon Prime', 'Disney+', 'Apple One', 'Gym'],
+      fields: [C('What to do', ['Cancel', 'Keep'])] }]},
+  { heading: 'People and pets', items: [
+    { label: 'Who to tell', kind: 'list', nameLabel: 'Name', suggest: [], addLabel: 'Add a person',
+      fields: [T('How to reach them', 'Phone or email')] },
+    { label: 'Children and dependants', kind: 'list', nameLabel: 'Name', suggest: [], addLabel: 'Add someone',
+      fields: [T('Who should care for them')] },
+    { label: 'Pets', kind: 'list', nameLabel: 'Pet’s name', suggest: [], addLabel: 'Add a pet',
+      fields: [T('Who should look after them'), T('Vet')] }]},
+  { heading: 'Wishes', items: [
+    { label: 'Your will', kind: 'single',
+      fields: [C('Where the original is', ['With my solicitor', 'At home', 'Will storage service', 'I don’t have one yet']), T('Executor')] },
+    { label: 'Funeral', kind: 'single',
+      fields: [C('Preference', ['Burial', 'Cremation', 'Green burial', 'No preference']), C('Prepaid plan', ['Yes', 'No'])] },
+    { label: 'Organ donation', kind: 'single',
+      fields: [C('Your choice', ['Yes', 'No', 'Some organs', 'Not decided'])] },
+    { label: 'Anything else', kind: 'single', fields: [], notesOpen: true }]}
+];
+
+var S = {
+  step: 0,
+  owner: '',
+  items: {},
+  sectionFiles: SECTIONS.map(function(){ return []; }),
+  photos: SECTIONS.map(function(){ return []; }),
+  mode: SECTIONS.map(function(){ return 'form'; }),
+  letter: '',
+  files: [],
+  people: [{ id: nid(), name: '', role: 'Executor' }, { id: nid(), name: '', role: 'Family' }, { id: nid(), name: '', role: 'Friend' }],
+  k: null,
+  extras: [],
+  places: { 'On my computer': true, 'Emailed to each card holder': true, 'On a USB stick kept with my will': true, 'In my cloud storage (iCloud, Google Drive, Dropbox)': false },
+  otherPlace: ''
+};
+function newEntry(title){ return { id: nid(), title: title || '', fields: {}, notes: '', files: [] }; }
+SECTIONS.forEach(function(sec, si){ sec.items.forEach(function(it, ii){ if (it.kind === 'single') { var e0 = newEntry(''); e0.open = true; S.items[si + '.' + ii] = [e0]; } else S.items[si + '.' + ii] = []; }); });
+
+var ROLES = ['Executor', 'Solicitor', 'Partner', 'Family', 'Friend', 'Other'];
+var TITLES = ['Welcome', 'Your affairs', 'Card holders', 'More envelopes', 'Copies', 'Seal'];
+
+function namedPeople(){ return S.people.filter(function(p){ return p.name.trim(); }); }
+function suggestK(n){ return n <= 1 ? 1 : Math.floor(n / 2) + 1; }
+function hasContent(e){
+  return !!(e.title.trim() || Object.keys(e.fields).some(function(k){ return String(e.fields[k] || '').trim(); }) || !Tally.isBlankHTML(e.notes) || e.files.length);
+}
+
+/* ---------- small building blocks ---------- */
+function richEditor(label, initial, onChange, placeholder){
+  var ed = el('div', { contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-label': label, 'class': 'rt', 'data-placeholder': placeholder || 'Write here' });
+  ed.innerHTML = initial || '';
+  function changed(){ if (Tally.isBlankHTML(ed.innerHTML) && !/<(ul|ol)/i.test(ed.innerHTML)) ed.innerHTML = ''; onChange(ed.innerHTML); }
+  ed.addEventListener('input', changed);
+  ed.addEventListener('paste', function(e){
+    e.preventDefault();
+    document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain'));
+  });
+  var bar = el('div', { 'class': 'rt-bar', role: 'group', 'aria-label': 'Formatting' });
+  [['bold', 'B', 'Bold', 'font-weight:800'], ['italic', 'I', 'Italic', 'font-style:italic'], ['insertUnorderedList', '• List', 'Bulleted list', ''], ['insertOrderedList', '1. List', 'Numbered list', '']].forEach(function(b){
+    bar.appendChild(el('button', { type: 'button', 'class': 'rt-btn', 'aria-label': b[2], style: b[3], text: b[1],
+      onmousedown: function(e){ e.preventDefault(); },
+      onclick: function(){ ed.focus(); document.execCommand(b[0]); changed(); } }));
+  });
+  var wrap = el('div', { 'class': 'rt-wrap' }, [bar, ed]);
+  wrap.editor = ed;
+  return wrap;
+}
+
+function chipGroup(label, options, value, onPick){
+  var g = el('div', { 'class': 'chips', role: 'group', 'aria-label': label });
+  options.forEach(function(o){
+    g.appendChild(el('button', { type: 'button', 'class': 'chip', 'aria-pressed': String(o === value), text: o, onclick: function(){
+      value = value === o ? '' : o;
+      Array.prototype.forEach.call(g.children, function(c){ c.setAttribute('aria-pressed', String(c.textContent === value)); });
+      onPick(value);
+    } }));
+  });
+  return g;
+}
+
+function attachButton(arr, listEl, label, onChange){
+  var id = nid();
+  var input = el('input', { type: 'file', id: id, 'class': 'vh', multiple: 'multiple' });
+  bindFiles(input, listEl, arr, onChange);
+  return el('label', { 'class': 'small', 'for': id, 'aria-label': label || 'Attach files' }, [
+    el('span', { 'aria-hidden': 'true', text: '+' }), 'Attach files', input]);
+}
+
+// One entry, shown as a one-line summary until tapped.
+function entryEl(item, entry, list, redraw, onChange){
+  var box = el('div', { 'class': 'entry' + (entry.open ? ' open' : '') });
+  var title = el('span', { 'class': 'sum-title' }), sub = el('span', { 'class': 'sum-sub' });
+  function summarise(){
+    title.textContent = entry.title.trim() || (item.kind === 'single' ? item.label : item.nameLabel);
+    var bits = Object.keys(entry.fields).map(function(k){ return String(entry.fields[k] || '').trim(); }).filter(Boolean);
+    if (!Tally.isBlankHTML(entry.notes)) bits.push('notes');
+    if (entry.files.length) bits.push(entry.files.length + (entry.files.length === 1 ? ' file' : ' files'));
+    sub.textContent = bits.length ? bits.join(', ') : 'Tap to add details';
+  }
+  function changed(){ summarise(); onChange(); }
+  summarise();
+  var head = el('button', { type: 'button', 'class': 'sum', 'aria-expanded': String(!!entry.open), onclick: function(){
+    entry.open = !entry.open; box.classList.toggle('open', entry.open); head.setAttribute('aria-expanded', String(entry.open));
+  } }, [el('span', { 'class': 'sum-text' }, [title, sub]),
+    el('span', { 'class': 'chev', 'aria-hidden': 'true', text: '›' })]);
+  var body = el('div', { 'class': 'entry-body' });
+  if (item.kind === 'list') {
+    var tid = nid();
+    var t = el('input', { type: 'text', id: tid, value: entry.title, placeholder: item.nameLabel });
+    t.addEventListener('input', function(){ entry.title = t.value; changed(); });
+    body.appendChild(el('div', { 'class': 'field' }, [el('label', { 'for': tid, text: item.nameLabel }), t]));
+  }
+  (item.fields || []).forEach(function(f){
+    if (f.type === 'chips') {
+      body.appendChild(el('div', { 'class': 'field' }, [el('span', { 'class': 'label', text: f.label }),
+        chipGroup(f.label, f.options, entry.fields[f.label], function(v){ entry.fields[f.label] = v; changed(); })]));
+    } else {
+      var fid = nid(), inp = el('input', { type: 'text', id: fid, value: entry.fields[f.label] || '', placeholder: f.placeholder });
+      inp.addEventListener('input', function(){ entry.fields[f.label] = inp.value; changed(); });
+      body.appendChild(el('div', { 'class': 'field' }, [el('label', { 'for': fid, text: f.label }), inp]));
+    }
+  });
+  var notes = richEditor('Notes', entry.notes, function(h){ entry.notes = h; changed(); }, 'Anything else they should know');
+  var showNotes = item.notesOpen || !Tally.isBlankHTML(entry.notes);
+  notes.hidden = !showNotes;
+  var noteBtn = el('button', { type: 'button', 'class': 'small', text: '+ Notes', onclick: function(){ notes.hidden = false; noteBtn.hidden = true; notes.editor.focus(); } });
+  noteBtn.hidden = showNotes;
+  var fileList = el('div', { 'class': 'files' });
+  var done = el('button', { type: 'button', 'class': 'small', text: 'Done', onclick: function(){ entry.open = false; box.classList.remove('open'); head.setAttribute('aria-expanded', 'false'); head.focus(); } });
+  var actions = [noteBtn, attachButton(entry.files, fileList, 'Attach files', changed)];
+  if (item.kind === 'list') actions.push(el('button', { type: 'button', 'class': 'link danger', text: 'Remove', 'aria-label': 'Remove ' + (entry.title || item.nameLabel),
+    onclick: function(){ var host = box.parentNode.parentNode; list.splice(list.indexOf(entry), 1); redraw(); var next = host.querySelector('.chip'); if (next) next.focus(); } }));
+  actions.push(el('span', { style: 'flex:1' }), done);
+  body.appendChild(notes);
+  body.appendChild(fileList);
+  body.appendChild(el('div', { 'class': 'row' }, actions));
+  box.appendChild(head); box.appendChild(body);
+  return box;
+}
+
+/* ---------- photos: downscale big images so envelopes stay small ---------- */
+function shrinkImage(file){
+  return new Promise(function(resolve){
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 1200000) { resolve(file); return; }
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      var max = 2000, sc = Math.min(1, max / Math.max(img.width, img.height));
+      var c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(b){
+        if (!b || b.size >= file.size) { resolve(file); return; }
+        resolve(new File([b], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+      }, 'image/jpeg', 0.85);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+function photoPanel(si, sec, onChange){
+  var list = S.photos[si];
+  var grid = el('div', { 'class': 'pgrid' });
+  var id = nid();
+  var input = el('input', { type: 'file', id: id, 'class': 'vh', multiple: 'multiple', accept: 'image/*,application/pdf,audio/*,video/*' });
+  var zone = el('label', { 'class': 'drop', 'for': id }, [
+    el('strong', { text: 'Add photos or screenshots' }),
+    el('span', { 'class': 'hint', text: sec.photoHint || 'Screenshots of apps, photos of letters and statements. PDFs, voice notes and videos work too.' }), input]);
+  async function add(files){
+    for (var i = 0; i < files.length; i++) list.push({ id: nid(), file: await shrinkImage(files[i]), caption: '' });
+    draw(); onChange(); scheduleSave();
+  }
+  input.addEventListener('change', function(){ add(Array.from(input.files)); input.value = ''; });
+  zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', function(){ zone.classList.remove('over'); });
+  zone.addEventListener('drop', function(e){ e.preventDefault(); zone.classList.remove('over'); add(Array.from(e.dataTransfer.files)); });
+  function draw(){
+    grid.innerHTML = '';
+    list.forEach(function(ph, i){
+      var cid = nid(), thumb;
+      if (/^image\//.test(ph.file.type)) thumb = el('img', { src: blobUrl(ph.file), alt: '' });
+      else if (/^video\//.test(ph.file.type)) thumb = player(ph.file);
+      else if (/^audio\//.test(ph.file.type)) thumb = el('div', { 'class': 'doc' }, [player(ph.file)]);
+      else thumb = el('div', { 'class': 'doc', text: ph.file.name });
+      var cap = el('input', { type: 'text', id: cid, value: ph.caption, placeholder: 'What is this?', 'aria-label': 'Caption for ' + ph.file.name });
+      cap.addEventListener('input', function(){ ph.caption = cap.value; });
+      grid.appendChild(el('figure', { 'class': 'ph' }, [thumb, cap,
+        el('button', { type: 'button', 'class': 'x ph-x', text: '×', 'aria-label': 'Remove ' + ph.file.name, onclick: function(){ list.splice(i, 1); draw(); onChange(); input.focus(); } })]));
+    });
+  }
+  draw();
+  return el('div', { 'class': 'photos' }, [zone, grid]);
+}
+
+/* ---------- screen 1: affairs ---------- */
+function buildSections(){
+  var host = $('sections');
+  SECTIONS.forEach(function(sec, si){
+    var dot = el('span', { 'class': 'dot' }), count = el('span', { 'class': 'count' });
+    var body = el('div', { 'class': 'body' });
+    var keptNote = el('p', { 'class': 'note' });
+    function refreshSection(){
+      var typed = sec.items.reduce(function(n, _, ii){ return n + S.items[si + '.' + ii].filter(hasContent).length; }, 0);
+      var pics = S.photos[si].length, parts = [];
+      if (typed) parts.push(typed + (typed === 1 ? ' entry' : ' entries'));
+      if (pics) parts.push(pics + (pics === 1 ? ' photo' : ' photos'));
+      dot.className = 'dot' + (parts.length ? ' on' : ''); count.textContent = parts.length ? parts.join(', ') : 'Not started';
+      keptNote.hidden = !typed;
+      keptNote.textContent = 'Your ' + typed + ' typed ' + (typed === 1 ? 'entry is' : 'entries are') + ' kept too.';
+    }
+    var form = el('div', { 'class': 'form' });
+    sec.items.forEach(function(it, ii){
+      var list = S.items[si + '.' + ii];
+      var entries = el('div', { 'class': 'entries' }), adders = el('div', { 'class': 'chips' });
+      var showAll = false;
+      function redraw(){
+        entries.innerHTML = ''; adders.innerHTML = '';
+        list.forEach(function(e){ entries.appendChild(entryEl(it, e, list, redraw, refreshSection)); });
+        if (it.kind === 'list') {
+          var sug = it.suggest || [], limit = showAll ? sug.length : Math.min(sug.length, 5);
+          sug.slice(0, limit).forEach(function(s){
+            adders.appendChild(el('button', { type: 'button', 'class': 'chip add', text: '+ ' + s, 'aria-label': 'Add ' + s, onclick: function(){ addEntry(s); } }));
+          });
+          if (limit < sug.length) adders.appendChild(el('button', { type: 'button', 'class': 'chip more', text: sug.length - limit + ' more', 'aria-label': 'Show ' + (sug.length - limit) + ' more suggestions',
+            onclick: function(){ showAll = true; redraw(); if (adders.children[limit]) adders.children[limit].focus(); } }));
+          adders.appendChild(el('button', { type: 'button', 'class': 'chip add', text: '+ ' + (it.addLabel || 'Other'), 'aria-label': it.addLabel || 'Add another ' + it.label.toLowerCase().replace(/s$/, ''), onclick: function(){ addEntry(''); } }));
+        }
+        refreshSection();
+      }
+      function addEntry(name){
+        list.forEach(function(e){ e.open = false; });
+        var e = newEntry(name); e.open = true; list.push(e); redraw();
+        var boxes = entries.querySelectorAll('.entry'), last = boxes[boxes.length - 1];
+        var first = last && last.querySelector(name && it.fields.length ? '.entry-body .chip, .entry-body .field + .field input' : '.entry-body input');
+        if (first) first.focus();
+      }
+      redraw();
+      form.appendChild(el('div', { 'class': 'item' }, [el('h3', { text: it.label }), entries, adders]));
+    });
+    var secFiles = el('div', { 'class': 'files' });
+    form.appendChild(el('div', { 'class': 'item' }, [el('h3', { text: 'Other ' + sec.heading.toLowerCase() + ' documents' }),
+      el('div', {}, [attachButton(S.sectionFiles[si], secFiles, 'Attach files', refreshSection)]), secFiles]));
+
+    var photos = el('div', {}, [keptNote, photoPanel(si, sec, refreshSection)]);
+    var bForm = el('button', { type: 'button', 'class': 'seg', text: 'Fill in' });
+    var bPhoto = el('button', { type: 'button', 'class': 'seg', text: 'Photos & screenshots' });
+    function setMode(m){
+      S.mode[si] = m; form.hidden = m !== 'form'; photos.hidden = m !== 'photos';
+      bForm.setAttribute('aria-pressed', String(m === 'form')); bPhoto.setAttribute('aria-pressed', String(m === 'photos'));
+    }
+    bForm.addEventListener('click', function(){ setMode('form'); });
+    bPhoto.addEventListener('click', function(){ setMode('photos'); });
+    body.appendChild(el('div', { 'class': 'segs', role: 'group', 'aria-label': 'How to add ' + sec.heading }, [bForm, bPhoto]));
+    body.appendChild(form); body.appendChild(photos);
+    setMode(S.mode[si]);
+    refreshSection();
+    host.appendChild(el('details', { 'class': 'sec', open: si === 0 }, [el('summary', {}, [dot, el('h2', { 'class': 'sec-title', text: sec.heading }), count]), body]));
+  });
+  $('affairs-letter').appendChild(richEditor('A note for whoever opens this', S.letter, function(h){ S.letter = h; }, 'Anything you’d like them to know first'));
+  bindFiles($('affairs-files'), $('affairs-filelist'), S.files);
+}
+
+/* Media: the browser's own players, fed from blob: URLs. No libraries. */
+var mediaUrls = new WeakMap();
+function blobUrl(f){ if (!mediaUrls.has(f)) mediaUrls.set(f, URL.createObjectURL(f)); return mediaUrls.get(f); }
+function isMedia(f){ return /^(audio|video)\//.test(f.type || ''); }
+function player(f, label){
+  var video = /^video\//.test(f.type);
+  return el(video ? 'video' : 'audio', { 'class': 'player', controls: 'controls', preload: 'metadata', playsinline: 'playsinline',
+    src: blobUrl(f), 'aria-label': label || f.name });
+}
+function bindFiles(input, listEl, arr, onChange){
+  function draw(){
+    if (onChange) onChange();
+    listEl.innerHTML = '';
+    arr.forEach(function(f, i){
+      var line = [el('span', { text: f.name + ' (' + size(f.size) + ')' }),
+        el('button', { type: 'button', 'class': 'link', text: 'Remove', 'aria-label': 'Remove ' + f.name, onclick: function(){ arr.splice(i, 1); draw(); input.focus(); } })];
+      listEl.appendChild(isMedia(f) ? el('div', { 'class': 'media' }, [el('div', {}, line), player(f)]) : el('div', {}, line));
+    });
+  }
+  input.addEventListener('change', function(){ Array.from(input.files).forEach(function(f){ arr.push(f); }); input.value = ''; draw(); });
+  draw();
+}
+function size(b){ return b < 1024 ? b + ' bytes' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
+
+/* ---------- screen 2: people ---------- */
+function drawPeople(){
+  var host = $('people'); host.innerHTML = '';
+  S.people.forEach(function(p, i){
+    var nameId = 'pn-' + p.id, roleId = 'pr-' + p.id;
+    var name = el('input', { type: 'text', id: nameId, value: p.name, placeholder: 'Name', 'aria-label': 'Card holder ' + (i + 1) + ' name', autocomplete: 'off' });
+    name.addEventListener('input', function(){ p.name = name.value; rm.setAttribute('aria-label', 'Remove ' + (p.name.trim() || 'card holder ' + (i + 1))); refreshK(); });
+    var role = el('select', { id: roleId, 'aria-label': 'Card holder ' + (i + 1) + ' relationship' });
+    ROLES.forEach(function(r){ role.appendChild(el('option', { value: r, text: r, selected: r === p.role })); });
+    role.addEventListener('change', function(){ p.role = role.value; refreshK(); });
+    var rm = el('button', { type: 'button', 'class': 'x', 'aria-label': 'Remove ' + (p.name.trim() || 'card holder ' + (i + 1)), text: '×', onclick: function(){
+      S.people.splice(i, 1); drawPeople();
+      var names = $('people').querySelectorAll('input[type=text]:not(.contact)');
+      (names[Math.min(i, names.length - 1)] || $('add-person')).focus();
+    } });
+    rm.disabled = S.people.length <= 2;
+    var contact = el('input', { type: 'text', 'class': 'contact', value: p.contact || '', placeholder: 'Phone or email (optional)', 'aria-label': 'Card holder ' + (i + 1) + ' phone or email', autocomplete: 'off' });
+    contact.addEventListener('input', function(){ p.contact = contact.value; });
+    host.appendChild(el('div', { 'class': 'person' }, [name, role, rm, contact]));
+  });
+  refreshK();
+}
+// A row of n sticks: tap one to need that many cards. Filled sticks are needed, outlined ones are spares.
+function drawSticks(host, n, k, rec, onPick, disabledText){
+  var hadFocus = host.contains(document.activeElement);
+  host.innerHTML = '';
+  if (!n) { host.appendChild(el('p', { 'class': 'hint', text: disabledText })); return; }
+  for (var i = 1; i <= n; i++) (function(i){
+    host.appendChild(el('button', { type: 'button', 'class': 'stick' + (i <= k ? ' on' : '') + (i === rec ? ' rec' : ''),
+      'aria-pressed': String(i === k), 'aria-label': 'Need ' + i + ' of ' + n + ' cards' + (i === rec ? ' (recommended)' : ''),
+      title: 'Need ' + i + ' of ' + n + (i === rec ? ' (recommended)' : ''), onclick: function(){ onPick(i); } }));
+  })(i);
+  if (hadFocus) host.querySelector('[aria-pressed=true]').focus();
+}
+function refreshK(){
+  var n = namedPeople().length, prev = S.k;
+  if (n < 2) {
+    $('k-big').textContent = '';
+    drawSticks($('k'), 0, 0, 0, null, 'Name two card holders first.');
+    $('k-explain').textContent = '';
+    drawHints(n, 0); validate(); return;
+  }
+  if (!S.kChosen || !prev || prev > n) S.k = suggestK(n);
+  $('k-big').textContent = S.k + ' of ' + n;
+  drawSticks($('k'), n, S.k, suggestK(n), function(v){ S.k = v; S.kChosen = true; refreshK(); });
+  var spare = n - S.k;
+  $('k-explain').textContent = 'Any ' + S.k + ' of your ' + n + ' card holders can open it together. ' +
+    (spare === 0 ? 'Every card is needed, so if one is lost it can never be opened.' :
+     spare === 1 ? 'If 1 card is lost, it still opens.' : 'If up to ' + spare + ' cards are lost, it still opens.') +
+    (S.k === suggestK(n) ? '' : ' The dot marks the recommended number.');
+  drawHints(n, S.k); validate();
+}
+function drawHints(n, k){
+  var host = $('people-hints'); host.innerHTML = '';
+  function warn(t){ host.appendChild(el('div', { 'class': 'note warn', text: t })); }
+  var named = namedPeople();
+  if (n >= 2 && k === 1) warn('With 1 card, any single person could open your envelope on their own at any time.');
+  if (n >= 2 && k === n) warn('Losing any one card would lock the envelope for good. Consider adding a person, or needing one card fewer.');
+  var family = named.filter(function(p){ return p.role === 'Family' || p.role === 'Partner'; }).length;
+  if (n >= 2 && family === n) warn('Every card would be with family. Adding a friend, executor or solicitor protects against one household holding them all.');
+  if (n >= 2 && named.every(function(p){ return p.role !== 'Executor' && p.role !== 'Solicitor'; })) host.appendChild(el('div', { 'class': 'note', text: 'Tip: giving a card to your executor or solicitor makes sure someone with a duty to act is involved.' }));
+  var names = named.map(function(p){ return p.name.trim().toLowerCase(); });
+  if (names.some(function(x, i){ return names.indexOf(x) !== i; })) warn('Two people have the same name. Add a surname so each card is clear.');
+}
+
+/* ---------- screen 3: extra envelopes ---------- */
+function drawExtras(){
+  var host = $('extras'); host.innerHTML = '';
+  var people = namedPeople();
+  if (!S.extras.length) host.appendChild(el('p', { 'class': 'hint', text: 'No extra envelopes. That’s fine: press Next to carry on.' }));
+  S.extras.forEach(function(x, xi){
+    x.holders = x.holders.filter(function(id){ return people.some(function(p){ return p.id === id; }); });
+    var nameId = nid(), noteId = nid(), fileId = nid(), kId = nid();
+    var nameIn = el('input', { type: 'text', id: nameId, value: x.name, placeholder: 'e.g. Letter to Sam' });
+    nameIn.addEventListener('input', function(){ x.name = nameIn.value; validate(); });
+    var note = richEditor('What goes inside', x.letter, function(h){ x.letter = h; }, 'Write it here');
+    var fileList = el('div', { 'class': 'files' });
+    var fileBtn = attachButton(x.files, fileList, 'Attach files to this envelope');
+    var checks = el('div', { 'class': 'checks' });
+    var kSel = el('div', { 'class': 'sticks', role: 'group', 'aria-labelledby': kId }), kText = el('p', { 'class': 'hint' }), kBig = el('span', { 'class': 'big-k' });
+    function refresh(){
+      var h = x.holders.length;
+      if (!h) { drawSticks(kSel, 0, 0, 0, null, 'Tick at least one person.'); kBig.textContent = ''; kText.textContent = ''; validate(); return; }
+      if (!x.k || x.k > h) x.k = suggestK(h);
+      kBig.textContent = x.k + ' of ' + h;
+      drawSticks(kSel, h, x.k, suggestK(h), function(v){ x.k = v; refresh(); });
+      kText.textContent = (x.k === 1 && h >= 1) ? 'Any one of these people could open it at any time, including now.' :
+        'Any ' + x.k + ' of these ' + h + ' people together can open it.';
+      kText.className = x.k === 1 ? 'note warn' : 'hint';
+      validate();
+    }
+    people.forEach(function(p){
+      var cid = nid();
+      var cb = el('input', { type: 'checkbox', id: cid, checked: x.holders.indexOf(p.id) >= 0 });
+      cb.addEventListener('change', function(){
+        if (cb.checked) x.holders.push(p.id); else x.holders = x.holders.filter(function(id){ return id !== p.id; });
+        refresh();
+      });
+      checks.appendChild(el('label', { 'for': cid }, [cb, el('span', {}, [p.name.trim() + ' ', el('span', { 'class': 'hint', text: p.role })])]));
+    });
+    refresh();
+    host.appendChild(el('div', { 'class': 'panel' }, [
+      el('div', { 'class': 'row', style: 'justify-content:space-between' }, [el('h2', { text: 'Envelope ' + (xi + 2) }),
+        el('button', { type: 'button', 'class': 'link', text: 'Remove envelope', 'aria-label': 'Remove envelope ' + (xi + 2), onclick: function(){ S.extras.splice(xi, 1); drawExtras(); $('add-extra').focus(); } })]),
+      el('div', { 'class': 'field' }, [el('label', { 'for': nameId, text: 'Name' }), nameIn]),
+      el('div', { 'class': 'field' }, [el('span', { 'class': 'label', text: 'What goes inside' }), note]),
+      el('div', { 'class': 'field' }, [el('span', { 'class': 'label', text: 'Files (optional)' }), el('div', {}, [fileBtn]), fileList]),
+      el('div', { 'class': 'field' }, [el('span', { 'class': 'label', text: 'Who holds a card for it?' }), checks]),
+      el('div', { 'class': 'kpick' }, [el('div', { 'class': 'khead' }, [el('span', { 'class': 'label', id: kId, text: 'Cards needed to open it' }), kBig]), kSel, kText])
+    ]));
+  });
+  validate();
+}
+
+/* ---------- screen 4: copies ---------- */
+function drawPlaces(){
+  var host = $('copy-places'); host.innerHTML = '';
+  Object.keys(S.places).forEach(function(pl){
+    var id = nid(), cb = el('input', { type: 'checkbox', id: id, checked: S.places[pl] });
+    cb.addEventListener('change', function(){ S.places[pl] = cb.checked; });
+    host.appendChild(el('label', { 'for': id }, [cb, pl]));
+  });
+  $('copies-other').addEventListener('input', function(e){ S.otherPlace = e.target.value; });
+}
+function placeList(){
+  var l = Object.keys(S.places).filter(function(p){ return S.places[p]; });
+  if (S.otherPlace.trim()) l.push(S.otherPlace.trim());
+  return l;
+}
+
+/* ---------- navigation ---------- */
+var READY = false;
+function validate(){
+  if (!READY) { $('next').disabled = true; return; }
+  var ok = true, msg = '';
+  if (S.step === 0) { ok = !!S.owner.trim(); msg = ok ? '' : 'Enter your name to start.'; }
+  if (S.step === 2) { ok = namedPeople().length >= 2; msg = ok ? '' : 'Add at least two people.'; }
+  if (S.step === 3) {
+    var bad = S.extras.filter(function(x){ return !x.name.trim() || !x.holders.length; });
+    ok = !bad.length; msg = ok ? '' : 'Give each envelope a name and at least one card holder.';
+  }
+  $('next').disabled = !ok; $('foot-msg').textContent = msg;
+}
+function go(step){
+  S.step = step;
+  for (var i = 0; i <= 5; i++) $('screen-' + i).hidden = i !== step;
+  $('steps').innerHTML = step === 0 || step > 4 ? '' : '<span class="t">' + TITLES[step] + '</span><span class="vh"> \u2014 step ' + step + ' of 4</span>';
+  Array.prototype.forEach.call($('notches').children, function(n, i){ n.className = i + 1 < step || step > 4 ? 'done' : i + 1 === step ? 'now' : ''; });
+  $('notches').hidden = step === 0;
+  $('back').hidden = step === 0 || step === 5;
+  $('next').hidden = step === 5;
+  $('next').textContent = step === 0 ? 'Start' : step === 4 ? 'Seal envelopes' : 'Next';
+  if (step === 2) drawPeople();
+  if (step === 3) drawExtras();
+  window.scrollTo(0, 0);
+  validate();
+  document.title = (step === 0 ? '' : (step === 5 ? 'Sealed' : TITLES[step]) + ' \u2013 ') + 'Tallystick';
+  if (READY && !go.initial) { var h = $('screen-' + step).querySelector('h1'); h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+  go.initial = false;
+  if (step === 5) seal();
+}
+$('owner').addEventListener('input', function(e){ S.owner = e.target.value; validate(); });
+$('next').addEventListener('click', function(){ go(S.step + 1); });
+$('back').addEventListener('click', function(){ go(S.step - 1); });
+$('add-person').addEventListener('click', function(){
+  S.people.push({ id: nid(), name: '', role: 'Friend' }); drawPeople();
+  var names = $('people').querySelectorAll('input[type=text]:not(.contact)'); names[names.length - 1].focus();
+});
+$('add-extra').addEventListener('click', function(){
+  S.extras.push({ id: nid(), name: '', letter: '', files: [], holders: namedPeople().map(function(p){ return p.id; }), k: null });
+  drawExtras();
+  var boxes = $('extras').querySelectorAll('.panel'); boxes[boxes.length - 1].querySelector('input[type=text]').focus();
+});
+
+/* ---------- sealing ---------- */
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function today(){ return new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }); }
+var SEALED_AT = '';
+function listNames(a){ return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+async function readFiles(files){
+  var out = [];
+  for (var i = 0; i < files.length; i++) out.push(new Uint8Array(await files[i].arrayBuffer()));
+  return out;
+}
+function buildEnvelopeHTML(title, meta, sealedB64){
+  var json = JSON.stringify(meta).replace(/</g, '\\u003c');
+  var P = function(name){ return '%' + '%' + name + '%' + '%'; }; // written this way so the build step leaves it alone
+  return VAULT_TEMPLATE.split(P('TITLE')).join(esc(title))
+    .split(P('META')).join(json)
+    .split(P('LIB')).join(LIB_SRC)
+    .split(P('SEALED')).join(sealedB64);
+}
+var LIB_SRC = document.getElementById('tally-lib').textContent;
+
+function combos(n, k, cap){
+  var all = [], idx = [];
+  (function rec(start){
+    if (all.length >= 5000) return;
+    if (idx.length === k) { all.push(idx.slice()); return; }
+    for (var i = start; i < n; i++) { idx.push(i); rec(i + 1); idx.pop(); }
+  })(0);
+  if (all.length <= cap) return { list: all, total: all.length, sampled: false };
+  // Too many to try them all: keep a spread that uses every card at least once, then random extras.
+  var pick = [], used = {};
+  for (var c = 0; c < n; c++) { var hit = all.filter(function(a){ return a.indexOf(c) >= 0; })[0]; if (hit && pick.indexOf(hit) < 0) pick.push(hit); }
+  while (pick.length < cap) { var r = all[Math.floor(Math.random() * all.length)]; if (pick.indexOf(r) < 0) pick.push(r); }
+  return { list: pick, total: all.length, sampled: true };
+}
+
+async function seal(){
+  $('done-h').textContent = 'Sealing your envelopes';
+  $('done-sub').textContent = 'Encrypting and checking every card. This takes a few seconds.';
+  $('hero-tick').hidden = true; $('tasks').hidden = true; $('checks-wrap').open = true;
+  var people = namedPeople(), owner = S.owner.trim(), when = today(), places = placeList();
+  SEALED_AT = when;
+  var all = people.map(function(p){ return p.id; });
+
+  // Files are stored flat in the bundle; entries point at them by index.
+  function collector(){
+    var files = [];
+    return { files: files, add: function(arr){ return arr.map(function(f){ files.push(f); return files.length - 1; }); } };
+  }
+  var envs = [];
+  var ac = collector();
+  var sections = SECTIONS.map(function(sec, si){
+    return { heading: sec.heading,
+      items: sec.items.map(function(it, ii){
+        return { label: it.label, entries: S.items[si + '.' + ii].filter(hasContent).map(function(e){
+          return { title: e.title.trim(),
+            fields: Object.keys(e.fields).filter(function(k){ return String(e.fields[k] || '').trim(); }).map(function(k){ return { label: k, value: String(e.fields[k]).trim() }; }),
+            notes: Tally.isBlankHTML(e.notes) ? '' : Tally.cleanHTML(e.notes),
+            files: ac.add(e.files) };
+        }) };
+      }).filter(function(it){ return it.entries.length; }),
+      photos: S.photos[si].map(function(ph){ return { file: ac.add([ph.file])[0], caption: ph.caption.trim() }; }),
+      files: ac.add(S.sectionFiles[si]) };
+  });
+  var otherFiles = ac.add(S.files);
+  envs.push({ name: 'Affairs', holders: all, k: S.k, files: ac.files,
+    manifest: { title: 'Affairs', owner: owner, sealed: when, layout: 2, sections: sections, otherFiles: otherFiles,
+      letterHtml: Tally.isBlankHTML(S.letter) ? '' : Tally.cleanHTML(S.letter), letterHeading: 'A note from ' + owner } });
+  S.extras.forEach(function(x){
+    var xc = collector(), idx = xc.add(x.files);
+    envs.push({ name: x.name.trim(), holders: x.holders.slice(), k: x.k, files: xc.files,
+      manifest: { title: x.name.trim(), owner: owner, sealed: when, layout: 2, sections: [], otherFiles: idx,
+        letterHtml: Tally.isBlankHTML(x.letter) ? '' : Tally.cleanHTML(x.letter), letterHeading: x.name.trim() } });
+  });
+  var byId = {}; people.forEach(function(p){ byId[p.id] = p; });
+  var mapItems = envs.map(function(e){ return { label: e.name, value: 'Opens with any ' + e.k + ' of its ' + e.holders.length + ' cards.' }; });
+  envs.push({ name: 'Contents list', holders: all, k: Math.min(2, all.length), files: [], isMap: true,
+    manifest: { title: 'Contents list', owner: owner, sealed: when,
+      intro: owner + ' made these sealed envelopes with Tallystick on ' + when + '. This list says what exists and where to find it. It holds no private details, and names no card holders.',
+      sections: [
+        { heading: 'Envelopes', items: mapItems },
+        { heading: 'Where copies are kept', items: [{ label: 'Places', value: places.length ? places.join('\n') : 'Not recorded' }] }
+      ] } });
+  var real = envs.slice();
+  // A harmless envelope that any single card opens, so each person can try their card alone.
+  envs.push({ name: 'Start here', holders: all, k: 1, files: [], practice: true,
+    manifest: { title: 'Start here', owner: owner, sealed: when,
+      intro: 'Your card works. Open this first, on your own, whenever you need to: it says who holds the other cards and where the envelope files are. It holds nothing private.',
+      sections: [
+        { heading: 'When it is needed for real', items: real.map(function(e){
+          return { label: e.name, value: 'You will open the ' + e.name + ' envelope file the same way, but it needs ' + e.k + ' cards entered together. Contact the other card holders: ' + listNames(e.holders.map(function(id){ return byId[id].name.trim(); })) + '.' };
+        }) },
+        { heading: 'Card holders', items: people.map(function(p){ return { label: p.name.trim(), value: p.role + ((p.contact || '').trim() ? '\n' + p.contact.trim() : '') }; }) },
+        { heading: 'Where the envelope files are kept', items: [{ label: 'Places', value: places.length ? places.join('\n') : 'Ask ' + owner + '.' }] }
+      ] } });
+
+  var checks = $('checks'); checks.innerHTML = '';
+  var allOk = true;
+  for (var i = 0; i < envs.length; i++) {
+    var e = envs[i];
+    var badge = el('span', { 'class': 'badge run', text: '…', 'aria-hidden': 'true' });
+    var line = el('div', {}, [el('strong', { text: e.name }), el('br'), el('span', { 'class': 'hint', text: 'Sealing…' })]);
+    checks.appendChild(el('div', { 'class': 'result' }, [badge, line]));
+    try {
+      var bytes = await readFiles(e.files);
+      var fileMeta = e.files.map(function(f){ return { name: f.name, type: f.type }; });
+      var manifest = Object.assign({}, e.manifest, { files: fileMeta });
+      var plainHash = Tally.toHex(await Tally.sha256(Tally.pack(manifest, bytes)));
+      var v = await Tally.makeVault(manifest, bytes, e.k, e.holders.length);
+      var meta = { format: 1, id: v.id, k: v.k, n: v.n, owner: owner, sealed: when, version: 1, practice: !!e.practice };
+      e.html = buildEnvelopeHTML(e.name, meta, v.ciphertextB64);
+      e.codes = {}; e.holders.forEach(function(id, j){ e.codes[id] = v.codes[j]; });
+      e.vaultId = v.id;
+      line.lastChild.textContent = 'Testing…';
+      e.result = await selfTest(e.html, v.codes, e.k, plainHash);
+      badge.className = 'badge ok'; badge.textContent = '✓';
+      line.lastChild.textContent = e.result;
+    } catch (err) {
+      allOk = false; badge.className = 'badge fail'; badge.textContent = '!';
+      line.lastChild.textContent = 'Problem: ' + err.message + ' Go back and seal again.';
+    }
+  }
+  if (!allOk) {
+    $('done-h').textContent = 'Something went wrong';
+    $('done-sub').textContent = 'Nothing was saved. Go back and seal again.';
+    $('back').hidden = false; return;
+  }
+  $('hero-tick').hidden = false; $('checks-wrap').open = false;
+  $('done-h').textContent = 'Sealed and checked';
+  $('done-sub').textContent = real.length + ' envelopes, a Start here file and ' + people.length + ' cards. Every card combination was tested and opens them correctly.';
+  drawDownloads(envs, owner);
+  await drawCards(envs, people, owner, places);
+  $('tasks').hidden = false;
+  rememberSealing(envs, people, owner, when);
+}
+function markDone(id){ $(id).classList.add('done'); $(id).querySelector('.num').textContent = '✓'; }
+
+// Re-opens the finished file exactly as a stranger would: parse it, then try card combinations.
+async function selfTest(html, codes, k, plainHash){
+  var doc = new DOMParser().parseFromString(html, 'text/html');
+  var meta = JSON.parse(doc.getElementById('meta').textContent);
+  var sealed = doc.getElementById('sealed').textContent;
+  var n = codes.length, set = combos(n, k, 60), tried = 0;
+  for (var c = 0; c < set.list.length; c++) {
+    var chosen = set.list[c].map(function(j){ return codes[j]; });
+    var plain = await Tally.openRaw(meta.id, meta.k, sealed, chosen);
+    if (Tally.toHex(await Tally.sha256(plain)) !== plainHash) throw new Error('Contents did not match after opening.');
+    tried++;
+  }
+  // One card fewer must not open it.
+  if (k > 1) {
+    var shares = [];
+    for (var s = 0; s < k - 1; s++) shares.push(await Tally.decodeShare(codes[s]));
+    var wrongKey = Tally.combine(shares), opened = true;
+    try { await Tally.decrypt(wrongKey, meta.id, Tally.fromB64(sealed)); } catch (e) { opened = false; }
+    if (opened) throw new Error('Too few cards opened the envelope.');
+  }
+  var how = set.sampled ? tried + ' of the ' + set.total + ' possible card combinations' : (tried === 1 ? 'the card combination' : 'all ' + tried + ' card combinations');
+  if (k === 1) return 'Each of the ' + tried + ' cards opens it on its own. Contents match exactly.';
+  return 'Opened with ' + how + '. Contents match exactly.' + (k > 1 ? ' ' + (k - 1) + (k - 1 === 1 ? ' card on its own does' : ' cards do') + ' not open it.' : '');
+}
+
+function fileName(env, owner){ return ('Tallystick - ' + env.name + ' - ' + owner).replace(/[\\/:*?"<>|]+/g, '').slice(0, 120) + '.html'; }
+function installed(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+// In the installed app, downloads are unreliable on phones, so hand files to the share sheet (which offers "Save to Files").
+function shareFiles(list){
+  var files = list.map(function(f){ return new File([f.text], f.name, { type: 'text/html' }); });
+  if (installed() && navigator.canShare && navigator.canShare({ files: files })) { navigator.share({ files: files }).catch(function(){}); return true; }
+  return false;
+}
+function save(name, text){
+  if (shareFiles([{ name: name, text: text }])) return;
+  var url = URL.createObjectURL(new Blob([text], { type: 'text/html' }));
+  var a = el('a', { href: url, download: name }); document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+}
+/* A Save button that opens a short list: one item per file (a single download each, so the browser
+   never asks for permission), then "Save all" for everything at once. */
+function saveMenu(label, files, opts){
+  opts = opts || {};
+  var saved = {};
+  function done(name){ saved[name] = true; if (opts.onAllSaved && files.every(function(f){ return saved[f.name]; })) opts.onAllSaved(); }
+  var list = el('div', { 'class': 'menu-list', role: 'menu' });
+  var menu = el('details', { 'class': 'menu' + (opts.alignEnd ? ' end' : '') }, [
+    el('summary', { 'class': opts.primary ? 'menu-btn primary' : 'menu-btn', 'aria-label': opts.ariaLabel || label, text: label }), list]);
+  files.forEach(function(f){
+    list.appendChild(el('button', { type: 'button', role: 'menuitem', 'aria-label': 'Save ' + f.label, onclick: function(){
+      save(f.name, f.html); done(f.name); menu.open = false;
+    } }, [el('span', { text: 'Save \u2013 ' + f.label }), el('span', { 'class': 'menu-size', text: size(f.html.length) })]));
+  });
+  if (files.length > 1) {
+    list.appendChild(el('hr'));
+    list.appendChild(el('button', { type: 'button', role: 'menuitem', 'class': 'all', onclick: function(){
+      if (!shareFiles(files.map(function(f){ return { name: f.name, text: f.html }; })))
+        files.forEach(function(f, i){ setTimeout(function(){ save(f.name, f.html); }, i * 400); });
+      files.forEach(function(f){ done(f.name); }); menu.open = false;
+    } }, [el('span', { text: 'Save all' }), el('span', { 'class': 'menu-size', text: files.length + ' files' })]));
+    list.appendChild(el('p', { 'class': 'menu-note', text: 'Your browser may ask to allow several downloads.' }));
+  }
+  menu.addEventListener('toggle', function(){ if (menu.open && document.activeElement === menu.querySelector('summary')) list.querySelector('[role=menuitem]').focus(); });
+  menu.querySelector('summary').addEventListener('keydown', function(e){
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); menu.open = true; var items = list.querySelectorAll('[role=menuitem]'); items[e.key === 'ArrowDown' ? 0 : items.length - 1].focus(); }
+  });
+  list.addEventListener('keydown', function(e){
+    var items = Array.prototype.slice.call(list.querySelectorAll('[role=menuitem]')), i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (e.key === 'Tab') { menu.open = false; }
+  });
+  return menu;
+}
+// Close any open save menu on an outside click or Escape.
+document.addEventListener('click', function(e){
+  Array.prototype.forEach.call(document.querySelectorAll('details.menu[open]'), function(m){ if (!m.contains(e.target)) m.open = false; });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  Array.prototype.forEach.call(document.querySelectorAll('details.menu[open]'), function(m){ m.open = false; m.querySelector('summary').focus(); });
+});
+// Opening one menu closes the others.
+document.addEventListener('toggle', function(e){
+  if (e.target.matches && e.target.matches('details.menu') && e.target.open)
+    Array.prototype.forEach.call(document.querySelectorAll('details.menu[open]'), function(m){ if (m !== e.target) m.open = false; });
+}, true);
+
+function drawDownloads(envs, owner){
+  var host = $('save-envelopes'); host.innerHTML = '';
+  host.appendChild(saveMenu(envs.length === 1 ? 'Save envelope' : 'Save envelopes',
+    envs.map(function(e){ return { label: e.name, name: fileName(e, owner), html: e.html }; }),
+    { primary: true, onAllSaved: function(){ markDone('task-save'); } }));
+}
+
+function cardMarkup(p, envs, owner, places){
+  var mine = envs.filter(function(e){ return !e.practice && e.holders.indexOf(p.id) >= 0; });
+  var practice = envs.filter(function(e){ return e.practice; })[0];
+  var byId = {}; namedPeople().forEach(function(q){ byId[q.id] = q; });
+  var h = '<article class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">' +
+    '<h3 style="margin:0;font-family:Georgia,serif">Tallystick card</h3></div>' +
+    '<p style="margin:0;font-size:14px">Created ' + esc(SEALED_AT) + '</p>' +
+    '<p style="margin:0">For <strong>' + esc(p.name.trim()) + '</strong>, holding keys to <strong>' + esc(owner) + '</strong>’s sealed envelopes.</p>';
+  mine.forEach(function(e){
+    var code = e.codes[p.id];
+    var others = e.holders.filter(function(id){ return id !== p.id; }).map(function(id){ return byId[id].name.trim(); });
+    h += '<div class="share">' + TallyQR.svg(code, 'QR code for the ' + esc(e.name) + ' envelope') +
+      '<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><strong>' + esc(e.name) + '</strong>' +
+      '<small>Needs any ' + e.k + ' of ' + e.holders.length + ' cards.' + (others.length ? ' The other cards are held by ' + esc(listNames(others)) + '.' : '') + '</small>' +
+      '<code>' + esc(code) + '</code></div></div>';
+  });
+  var reach = namedPeople().filter(function(q){ return q.id !== p.id; });
+  if (reach.length) {
+    h += '<div style="border-top:1px dashed #999;padding-top:12px;display:flex;flex-direction:column;gap:2px"><small><strong>How to reach the others</strong></small>' +
+      reach.map(function(q){ return '<small>' + esc(q.name.trim()) + ' \u00b7 ' + esc(q.role) + ((q.contact || '').trim() ? ' \u00b7 ' + esc(q.contact.trim()) : '') + '</small>'; }).join('') + '</div>';
+  }
+  if (practice) {
+    var pc = practice.codes[p.id];
+    h += '<div class="share" style="border-top-style:solid">' + TallyQR.svg(pc, 'QR code for the practice envelope') +
+      '<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><strong>Start here</strong>' +
+      '<small>Your own code for the Start here file. It opens with this card alone, so try it any time. It says who holds the other cards and where the envelopes are, and holds nothing private.</small>' +
+      '<code>' + esc(pc) + '</code></div></div>';
+  }
+  h += '<div style="border-top:1px dashed #999;padding-top:12px;display:flex;flex-direction:column;gap:4px"><small><strong>Keep this card safe.</strong> On its own it opens nothing.</small>' +
+    '<small><strong>When the time comes:</strong> 1. Find a copy of the envelope file' + (places.length ? ' (kept: ' + esc(places.join('; ')) + ')' : '') + '. ' +
+    '2. Open it in any web browser. 3. Enter this card’s code with codes from other card holders. Not sure what to do? Open the Start here file first.</small></div></article>';
+  return h;
+}
+async function drawCards(envs, people, owner, places){
+  var html = people.map(function(p){ return cardMarkup(p, envs, owner, places); }).join('');
+  $('cards').innerHTML = html;
+  $('cards-sub').textContent = 'One card for each of ' + listNames(people.map(function(p){ return p.name.trim(); })) + '. Each card holds keys for every envelope that person can help open.';
+  $('print-cards').onclick = function(){
+    var d = $('cards').closest('details'), wasOpen = d.open; d.open = true;
+    document.body.classList.add('print-cards'); window.print();
+    setTimeout(function(){ document.body.classList.remove('print-cards'); d.open = wasOpen; }, 500);
+    markDone('task-print');
+  };
+  function cardPage(title, inner){
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(title) + '</title><style>' +
+      'body{font:15px/1.5 system-ui,sans-serif;margin:0;padding:20px;background:#fff;color:#111}.card{border:1px solid #999;border-radius:6px;padding:20px;margin:0 auto 20px;max-width:640px;display:flex;flex-direction:column;gap:12px;break-inside:avoid;page-break-inside:avoid}' +
+      '.share{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding-top:12px;border-top:1px dashed #999}.share svg{width:120px;height:120px}code{font:12px/1.5 monospace;word-break:break-all}small{font-size:13px}</style></head><body>' + inner + '</body></html>';
+  }
+  var safeOwner = owner.replace(/[\\/:*?"<>|]+/g, '');
+  $('save-cards').onclick = function(){
+    save('Tallystick cards - ' + safeOwner + '.html', cardPage('Tallystick cards - ' + owner, html));
+    markDone('task-print');
+  };
+  drawSend(people, function(p){
+    return { name: 'Tallystick card - ' + p.name.trim().replace(/[\\/:*?"<>|]+/g, '') + '.html',
+      html: cardPage('Tallystick card for ' + p.name.trim(), cardMarkup(p, envs, owner, places)) };
+  }, function(p){
+    return envs.filter(function(e){ return e.holders.indexOf(p.id) >= 0; })
+      .map(function(e){ return { label: e.name, name: fileName(e, owner), html: e.html }; });
+  }, owner);
+}
+
+/* ---------- sending cards to card holders ---------- */
+function message(p, owner, withEnvelopes){
+  var first = p.name.trim().split(/\s+/)[0];
+  return 'Hi ' + first + ',\n\n' +
+    'I\u2019ve used Tallystick to leave my affairs in order, and I\u2019d like you to be one of my card holders. Your card lets you help open my sealed envelopes when the time comes. It can\u2019t open anything on its own.\n\n' +
+    (withEnvelopes ? 'Your card and copies of my sealed envelopes are attached. Please keep them all, together, somewhere safe. The envelopes can\u2019t be opened without enough cards.\n\n'
+                   : 'Your card is attached. Please keep it somewhere safe, ideally with your copy of my will.\n\n') +
+    'You can try your card any time: open the \u201cStart here\u201d file and enter the Start here code from your card.\n\n' +
+    'Thanks,\n' + owner;
+}
+// people: card holders; cardFile(p) -> {name, html}; envFiles(p) -> [{name, html}] for the envelopes p holds a card for, plus Start here.
+function drawSend(people, cardFile, envFiles, owner){
+  var host = $('send-list'); host.innerHTML = '';
+  var probe = new File(['x'], 'x.html', { type: 'text/html' });
+  $('share-info').hidden = !(navigator.canShare && navigator.canShare({ files: [probe] }));
+  var subject = 'You\u2019re one of my Tallystick card holders';
+  var incId = nid(), inc = el('input', { type: 'checkbox', id: incId, checked: true });
+  var rows = [];
+  people.forEach(function(p){
+    var card = cardFile(p), envs = envFiles(p);
+    var info = el('span');
+    var actions = el('div', { 'class': 'row' });
+    function list(){ return inc.checked ? [card].concat(envs) : [card]; }
+    function asFiles(){ return list().map(function(f){ return new File([f.html], f.name, { type: 'text/html' }); }); }
+    function refresh(){
+      var l = list(), bytes = l.reduce(function(n, f){ return n + f.html.length; }, 0);
+      info.textContent = (inc.checked ? 'Card and ' + envs.length + ' envelope' + (envs.length === 1 ? '' : 's') : 'Card only') + ', ' + size(bytes);
+      actions.innerHTML = '';
+      var files = asFiles();
+      if (navigator.canShare && navigator.canShare({ files: files })) {
+        actions.appendChild(el('button', { type: 'button', 'class': 'small', text: 'Share', 'aria-label': 'Share with ' + p.name.trim(), onclick: function(){
+          navigator.share({ files: asFiles(), title: subject, text: message(p, owner, inc.checked) }).catch(function(){});
+        } }));
+      }
+      var toSave = [{ label: 'Card', name: card.name, html: card.html }].concat(inc.checked ? envs : []);
+      actions.appendChild(saveMenu('Save', toSave, { alignEnd: true, ariaLabel: 'Save files for ' + p.name.trim() }));
+    }
+    rows.push(refresh);
+    refresh();
+    host.appendChild(el('div', { 'class': 'send' }, [
+      el('div', { 'class': 'who' }, [el('strong', { text: p.name.trim() }), (p.contact || '').trim() ? el('span', { text: p.contact.trim() }) : null, info]), actions
+    ]));
+  });
+  inc.addEventListener('change', function(){ rows.forEach(function(r){ r(); }); });
+  host.insertBefore(el('label', { 'for': incId, 'class': 'inc' },
+    [inc, 'Include their envelopes']), host.firstChild);
+  host.insertBefore(el('p', { 'class': 'hint', text: 'Each person gets copies of only the envelopes they hold a card for, plus Start here. An envelope plus one card opens nothing.' }), host.children[1]);
+}
+
+/* Browser autofill sometimes fills a box without a normal input event (Chrome's suggestion list,
+   password managers). Treat change events and Chrome's autofill animation as typing. */
+var seenValue = new WeakMap();
+document.addEventListener('input', function(e){ seenValue.set(e.target, e.target.value); }, true);
+function asTyped(t){
+  if (!t || t.tagName !== 'INPUT' || t.type !== 'text' || seenValue.get(t) === t.value) return;
+  t.dispatchEvent(new Event('input', { bubbles: true }));
+}
+document.addEventListener('change', function(e){ asTyped(e.target); }, true);
+document.addEventListener('animationstart', function(e){ if (e.animationName === 'tally-autofill') asTyped(e.target); }, true);
+$('owner').addEventListener('blur', function(){ asTyped($('owner')); });
+
+/* Install prompt (only when served from a web address) */
+var installEvt = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); installEvt = e;
+  $('install').hidden = false; $('install-btn').hidden = false;
+  $('install-text').textContent = 'Add it to your home screen. It works offline, and nothing you type leaves this device.';
+});
+$('install-btn').addEventListener('click', function(){
+  if (!installEvt) return;
+  installEvt.prompt();
+  installEvt.userChoice.then(function(){ installEvt = null; $('install').hidden = true; });
+});
+if (/^https?:$/.test(location.protocol) && !installed() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+  $('install').hidden = false;
+  $('install-text').textContent = 'To install, tap the Share button, then Add to Home Screen. It works offline, and nothing you type leaves this device.';
+}
+
+/* ---------- saving progress on this device (IndexedDB) ----------
+   The draft holds your answers and attached files while you work, and is deleted when you seal.
+   The history holds sealed envelope files (already encrypted) and their details, never card codes. */
+var DB = (function(){
+  var dbp = null;
+  function open(){
+    if (!dbp) dbp = new Promise(function(resolve, reject){
+      var req = indexedDB.open('tallystick', 1);
+      req.onupgradeneeded = function(){
+        var db = req.result;
+        db.createObjectStore('draft');
+        db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
+      };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    return dbp;
+  }
+  function run(store, mode, fn){
+    return open().then(function(db){ return new Promise(function(resolve, reject){
+      var t = db.transaction(store, mode), req = fn(t.objectStore(store));
+      t.oncomplete = function(){ resolve(req && req.result); };
+      t.onerror = t.onabort = function(){ reject(t.error); };
+    }); });
+  }
+  return {
+    getDraft: function(){ return run('draft', 'readonly', function(s){ return s.get('current'); }); },
+    putDraft: function(d){ return run('draft', 'readwrite', function(s){ return s.put(d, 'current'); }); },
+    clearDraft: function(){ return run('draft', 'readwrite', function(s){ return s.delete('current'); }); },
+    addHistory: function(r){ return run('history', 'readwrite', function(s){ return s.add(r); }); },
+    listHistory: function(){ return run('history', 'readonly', function(s){ return s.getAll(); }); },
+    removeHistory: function(id){ return run('history', 'readwrite', function(s){ return s.delete(id); }); }
+  };
+})();
+
+function snapshot(){
+  return { v: 1, savedAt: Date.now(), uid: uid, state: {
+    step: S.step, owner: S.owner, items: S.items, sectionFiles: S.sectionFiles,
+    photos: S.photos.map(function(list){ return list.map(function(p){ return { id: p.id, file: p.file, caption: p.caption }; }); }),
+    mode: S.mode, letter: S.letter, files: S.files, people: S.people, k: S.k, kChosen: !!S.kChosen,
+    extras: S.extras, places: S.places, otherPlace: S.otherPlace } };
+}
+function restore(d){
+  var st = d && d.state;
+  if (!st || !(String(st.owner || '').trim() || st.step > 0)) return false;
+  Object.keys(S.items).forEach(function(key){ if (st.items && st.items[key]) S.items[key] = st.items[key]; });
+  ['owner', 'letter', 'files', 'people', 'k', 'kChosen', 'extras', 'places', 'otherPlace'].forEach(function(key){ if (st[key] !== undefined) S[key] = st[key]; });
+  ['sectionFiles', 'photos', 'mode'].forEach(function(key){
+    (st[key] || []).forEach(function(v, i){ if (i < S[key].length) S[key][i] = v; });
+  });
+  uid = Math.max(uid, d.uid || 0);
+  return true;
+}
+var saveTimer = null;
+function scheduleSave(){
+  if (!READY || S.step >= 5) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    if (S.step >= 5) return;
+    DB.putDraft(snapshot()).catch(function(){});
+  }, 400);
+}
+['input', 'change', 'click'].forEach(function(type){ document.addEventListener(type, scheduleSave); });
+window.addEventListener('pagehide', function(){ if (READY && S.step < 5) { clearTimeout(saveTimer); DB.putDraft(snapshot()).catch(function(){}); } });
+
+function showResumed(savedAt){
+  var when = new Date(savedAt).toLocaleString('en-GB', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+  $('resumed-text').textContent = 'Picked up where you left off (' + when + ').';
+  $('resumed').hidden = false;
+}
+$('start-over').addEventListener('click', function(){
+  var b = $('start-over');
+  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to clear your answers'; return; }
+  READY = false; clearTimeout(saveTimer);
+  DB.clearDraft().catch(function(){}).then(function(){ location.reload(); });
+});
+
+function rememberSealing(envs, people, owner, when){
+  clearTimeout(saveTimer);
+  DB.clearDraft().catch(function(){});
+  DB.addHistory({
+    created: Date.now(), sealed: when, owner: owner,
+    holders: people.map(function(p){ return { name: p.name.trim(), role: p.role }; }),
+    envelopes: envs.map(function(e){ return { name: e.name, k: e.k, n: e.holders.length, fileName: fileName(e, owner), html: e.html }; })
+  }).then(drawHistory).catch(function(){});
+}
+function drawHistory(){
+  return DB.listHistory().then(function(list){
+    var host = $('history-list'); host.innerHTML = '';
+    $('history').hidden = !list.length;
+    list.sort(function(a, b){ return b.created - a.created; }).forEach(function(r){
+      var real = r.envelopes.filter(function(e){ return e.name !== 'Start here'; });
+      var remove = el('button', { type: 'button', 'class': 'link danger', text: 'Remove', 'aria-label': 'Remove envelopes sealed ' + r.sealed, onclick: function(){
+        if (!remove.dataset.armed) { remove.dataset.armed = '1'; remove.textContent = 'Tap again to remove'; remove.setAttribute('aria-label', 'Tap again to remove envelopes sealed ' + r.sealed); return; }
+        DB.removeHistory(r.id).then(drawHistory).then(function(){ ($('history').hidden ? $('owner') : $('history-h')).focus(); });
+      } });
+      host.appendChild(el('div', { 'class': 'hist' }, [
+        el('div', { 'class': 'hist-text' }, [
+          el('strong', { text: 'Sealed ' + r.sealed }),
+          el('span', { text: real.map(function(e){ return e.name + ' (' + e.k + ' of ' + e.n + ')'; }).join(', ') }),
+          el('span', { text: 'Card holders: ' + listNames(r.holders.map(function(h){ return h.name; })) })
+        ]),
+        el('div', { 'class': 'row' }, [
+          saveMenu('Save', r.envelopes.map(function(e){ return { label: e.name, name: e.fileName, html: e.html }; }), { alignEnd: true, ariaLabel: 'Save envelopes sealed ' + r.sealed }),
+          remove
+        ])
+      ]));
+    });
+  }).catch(function(){ $('history').hidden = true; });
+}
+
+/* ---------- start ---------- */
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+function start(draft){
+  var resumed = restore(draft);
+  buildSections();
+  drawPlaces();
+  $('owner').value = S.owner;
+  $('copies-other').value = S.otherPlace;
+  READY = true;
+  go.initial = true;
+  go(resumed ? Math.min(draft.state.step, 4) : 0);
+  if (resumed) showResumed(draft.savedAt);
+  drawHistory();
+  document.documentElement.setAttribute('data-ready', '');
+}
+var startTimeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2000); });
+Promise.race([DB.getDraft(), startTimeout]).catch(function(){ return null; }).then(start);
+})();
+</script>
+%%PWA_SCRIPT%%
+</body>
+</html>

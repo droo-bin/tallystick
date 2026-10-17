@@ -1,0 +1,24 @@
+# Build output (CI rebuilds it; run `node build.js` locally)
+dist/
+
+# Test output
+test/shots/
+test/downloads/
+__pycache__/
+*.pyc
+
+# Packaging and tooling
+*.zip
+node_modules/
+package-lock.json
+
+# Never commit real envelopes or cards made while testing
+Tallystick - *.html
+Tallystick card*.html
+Tallystick cards*.html
+
+# OS and editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

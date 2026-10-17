@@ -118,6 +118,17 @@ class KeyboardTests(BrowserTest):
         self.assertIn("any three pieces show the way, but two pieces show nothing", text)
         self.assertIn("Nothing leaves your device", text)
 
+    def test_terms_link_opens_the_disclaimer_and_moves_focus_to_it(self):
+        page = self.creator().page
+        self.assertIn("Not a will or legal advice", page.inner_text(".legal-line"))
+        page.get_by_role("link", name="Read the terms").press("Enter")
+        self.assertTrue(page.locator("#terms").evaluate("d => d.open"))
+        self.assertEqual(focused(page)["text"], "Terms and disclaimer")
+        text = page.inner_text("#terms")
+        self.assertIn('provided "as is", without any warranty', text)
+        self.assertIn("It is not a will", text)
+        self.assertIn("As far as the law allows", text)
+
 
 class SealedKeyboardTests(SealedHouseholdTest):
     household = PAIR

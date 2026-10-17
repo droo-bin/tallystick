@@ -198,6 +198,43 @@
     </section>
   </div>
 </details>
+
+<details class="explain" id="terms">
+  <summary><h2>Terms and disclaimer</h2></summary>
+  <div class="explain-body">
+    <section>
+      <h3>Free, and provided as is</h3>
+      <p>Tallystick is free and made by volunteers. It's provided "as is", without any warranty of any kind, express or implied. That includes any warranty that it will work for your purpose, be free of errors, or that envelopes will always open. You use it at your own risk.</p>
+    </section>
+    <section>
+      <h3>Not a will, and not advice</h3>
+      <p>Tallystick records information and wishes. It is not a will and doesn't make anything legally binding. Nothing in it is legal, financial, tax or medical advice. For your will, power of attorney or estate planning, speak to a solicitor or other qualified adviser.</p>
+    </section>
+    <section>
+      <h3>You're responsible for your envelopes</h3>
+      <ul>
+        <li>What you put in them, who you give cards to, and keeping cards and copies safe. If too many cards are lost, nobody can open the envelope, and the people who make Tallystick can't recover it.</li>
+        <li>Testing that your cards open your envelopes, and checking them from time to time.</li>
+        <li>Making sure you're allowed to share what you include. Some services forbid sharing login details, so write where things are and who to contact, not passwords. The people who open your envelopes are responsible for acting lawfully with what they find.</li>
+        <li>Personal information about other people that you choose to include.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Security has limits</h3>
+      <p>Tallystick uses standard, well-tested encryption, but its code hasn't been independently audited, and no software is perfectly secure. Don't rely on it as the only record of anything important.</p>
+    </section>
+    <section>
+      <h3>Your privacy</h3>
+      <p>Tallystick has no accounts, analytics or tracking, and what you type is never sent anywhere. The website is hosted on GitHub Pages. Like any web host, GitHub may log basic technical details such as your IP address when the page loads. The offline file makes no connections at all.</p>
+    </section>
+    <section>
+      <h3>Limit of liability</h3>
+      <p>As far as the law allows, the people who make and contribute to Tallystick aren't liable for any loss or damage arising from using it or being unable to use it. That includes lost data, money, access or opportunity, and any loss caused by an envelope that can't be opened or is opened by the wrong people. Nothing here limits any liability that can't be limited by law, such as for death or personal injury caused by negligence, or for fraud.</p>
+      <p>These terms are governed by the law of England and Wales. By using Tallystick, you accept them.</p>
+    </section>
+  </div>
+</details>
+<p class="legal-line">Free, with no warranty. Not a will or legal advice. <a href="#terms" id="terms-link">Read the terms</a>.</p>
 </main>
 
 <footer class="foot">
@@ -1234,6 +1271,13 @@ function start(draft){
   if (resumed) showResumed(draft.savedAt);
   drawHistory().then(function(){ document.documentElement.setAttribute('data-ready', ''); });
 }
+$('terms-link').addEventListener('click', function(e){
+  e.preventDefault();
+  var terms = $('terms');
+  terms.open = true;
+  terms.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  terms.querySelector('summary').focus();
+});
 var startTimeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2000); });
 Promise.race([DB.getDraft(), startTimeout]).catch(function(){ return null; }).then(start);
 })();

@@ -42,6 +42,7 @@
   <div class="intro">
     <h1>Leave things in order for the people you trust</h1>
     <p class="lede">Write down what your family would need to know, then seal it. It only opens when enough of the people you choose bring their cards together.</p>
+    <div class="facts"><span>Free</span><span>Works offline</span><span>About 20 minutes</span></div>
   </div>
   <ol class="how">
     <li><span class="tally" aria-hidden="true"><i></i></span><div><strong>Write it down</strong><span>Accounts, policies, wishes and where things are. Tap to add, skip what you don't know.</span></div></li>
@@ -63,10 +64,6 @@
       <a href="#how-safe" class="opens" data-opens="how-safe">How your envelopes are protected</a>
     </div>
   </section>
-  <div class="panel">
-    <div class="field"><label for="owner">Your full name</label><input type="text" id="owner" class="big-input" autocomplete="name" autocapitalize="words" placeholder="e.g. Sam Taylor"></div>
-    <div class="facts"><span>Free</span><span>Works offline</span><span>About 20 minutes</span></div>
-  </div>
   <p class="hint" id="draft-hint">Your answers are kept on this device as you go, so you can close this page and come back. They're deleted once you seal.</p>
   <section class="panel" id="history" hidden aria-labelledby="history-h">
     <h2 id="history-h" tabindex="-1">Envelopes you've sealed</h2>
@@ -267,8 +264,9 @@
 <p class="legal-line">Free, with no warranty. Not a will or legal advice. <a href="#terms" id="terms-link">Read the terms</a>.</p>
 </main>
 
-<footer class="foot">
+<footer class="foot" id="foot">
   <div class="foot-in">
+    <div class="foot-name"><label for="owner">Your full name</label><input type="text" id="owner" autocomplete="name" autocapitalize="words" enterkeyhint="go" placeholder="e.g. Sam Taylor"></div>
     <button type="button" class="ghost" id="back">Back</button>
     <span class="hint" id="foot-msg" role="status" aria-live="polite"></span>
     <button type="button" id="next" disabled aria-describedby="foot-msg">Start</button>
@@ -780,6 +778,7 @@ function go(step){
   Array.prototype.forEach.call($('notches').children, function(n, i){ n.className = i + 1 < step || step > 4 ? 'done' : i + 1 === step ? 'now' : ''; });
   $('notches').hidden = step === 0;
   $('back').hidden = step === 0 || step === 5;
+  $('foot').classList.toggle('is-start', step === 0);
   $('next').hidden = step === 5;
   $('next').textContent = step === 0 ? 'Start' : step === 4 ? 'Seal envelopes' : 'Next';
   if (step === 2) drawPeople();
@@ -792,6 +791,7 @@ function go(step){
   if (step === 5) seal();
 }
 $('owner').addEventListener('input', function(e){ S.owner = e.target.value; validate(); });
+$('owner').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !$('next').disabled) { e.preventDefault(); go(1); } });
 $('next').addEventListener('click', function(){ go(S.step + 1); });
 $('back').addEventListener('click', function(){ go(S.step - 1); });
 $('add-person').addEventListener('click', function(){

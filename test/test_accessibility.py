@@ -77,6 +77,16 @@ class KeyboardTests(BrowserTest):
         creator.page.keyboard.press("Enter")
         self.assertEqual(creator.step_title, "Your affairs")
 
+    def test_name_sits_in_the_footer_and_enter_starts(self):
+        creator = self.creator()
+        self.assertEqual(creator.page.locator("#owner").evaluate("e => !!e.closest('footer')"), True)
+        creator.page.press("#owner", "Enter")
+        self.assertEqual(creator.step_title, "Leave things in order for the people you trust")
+        creator.page.fill("#owner", "Sam Taylor")
+        creator.page.press("#owner", "Enter")
+        self.assertEqual(creator.step_title, "Your affairs")
+        self.assertFalse(creator.page.is_visible("#owner"))
+
     def test_adding_a_suggestion_moves_focus_into_the_new_entry(self):
         creator = self.creator().start("Sam Taylor")
         creator.section("Money").get_by_role("button", name="Add ISA").press("Enter")

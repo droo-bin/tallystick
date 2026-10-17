@@ -6,13 +6,17 @@
 
 <p align="center">Leave your affairs in order, sealed for the people you trust.<br>Free, private, offline.</p>
 
+<p align="center"><strong><a href="https://droo-bin.github.io/tallystick/">Open Tallystick</a></strong> · <a href="https://droo-bin.github.io/tallystick/tallystick.html">Download the offline file</a></p>
+
 Medieval tally sticks were split in two, and only the matching halves could prove a record. Tallystick does the
 same with a key: it's split between the people you choose, and only enough of them together can open what you leave.
 
 ## Two ways to use it
 
-- **`dist/tallystick.html`**: one file. Open it in any browser, even with no internet. It blocks all network access.
-- **`dist/pwa/`**: the same app as an installable web app. Host the folder on any static host and people can add it to their home screen. It works offline once opened.
+- **Online, installable:** [droo-bin.github.io/tallystick](https://droo-bin.github.io/tallystick/). Open it on your phone or computer and add it to your home screen. After the first visit it works with no connection, and nothing you type is ever sent anywhere.
+- **One offline file:** [tallystick.html](https://droo-bin.github.io/tallystick/tallystick.html), also attached to each [release](https://github.com/droo-bin/tallystick/releases) with a checksum. Save it and open it in any browser. It blocks all network access.
+
+Both are built from this repo: `dist/pwa/` and `dist/tallystick.html`.
 
 ## Hosting the PWA (free)
 

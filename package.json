@@ -1,0 +1,16 @@
+{
+  "name": "tallystick",
+  "version": "1.0.0",
+  "description": "Leave your affairs in order, sealed for the people you trust. Free, private, offline.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "private": true
+}

@@ -91,3 +91,8 @@ your own risk.
 
 These terms are governed by the law of England and Wales. The same terms appear in the app under
 **Terms and disclaimer**.
+
+## Licence
+
+Tallystick is licensed under the [Apache License, Version 2.0](LICENSE). Sections 7 and 8 of the licence set out
+the same "as is" and limitation of liability terms for anyone who uses, copies or changes the code.

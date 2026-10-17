@@ -36,9 +36,10 @@ class CreatorPage:
         return self.page.is_visible("#resumed")
 
     def start_over(self):
+        """Start over asks for a second tap, clears the draft, then reloads the page."""
         self.page.click("#start-over")
-        self.page.click("#start-over")
-        self.page.wait_for_load_state()
+        with self.page.expect_navigation():
+            self.page.click("#start-over")
         return self.wait_until_ready()
 
     def back(self):
@@ -163,6 +164,7 @@ class CreatorPage:
     def seal(self):
         self.next()
         self.page.locator("#done-h", has_text=SEALED_HEADING).wait_for(timeout=60000)
+        self.page.wait_for_selector("html[data-history-saved]", state="attached")
         return FinishScreen(self.page)
 
 

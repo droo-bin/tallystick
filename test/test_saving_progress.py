@@ -3,7 +3,7 @@ import unittest
 
 from support import app
 from support.data import JO, PAIR, PAT, SAM
-from support.fixtures import BrowserTest, SealedHouseholdTest
+from support.fixtures import SLOW_STORAGE, BrowserTest, SealedHouseholdTest
 from support.pages import CARD_CODE, CreatorPage, EnvelopePage
 
 READ_DATABASE = """() => new Promise(resolve => {
@@ -60,6 +60,13 @@ class DraftTests(BrowserTest):
         self.assertIn("1 photo", creator.section_status("Pensions and work"))
         self.assertEqual(creator.section("Pensions and work").locator(".ph input").input_value(), "Nest app")
         self.assertIn("Start with the blue folder.", creator.page.inner_text("#affairs-letter"))
+
+    def test_start_over_clears_everything_even_when_storage_is_slow(self):
+        context = self.new_context()
+        context.add_init_script(SLOW_STORAGE)
+        creator = CreatorPage(self.new_page(context), app.single_file_url()).start("Sam Taylor").reload().start_over()
+        self.assertFalse(creator.resumed)
+        self.assertEqual(creator.page.input_value("#owner"), "")
 
     def test_start_over_clears_everything(self):
         creator = self.half_finished().reload().start_over()

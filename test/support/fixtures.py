@@ -1,4 +1,8 @@
-"""Base test classes. Each sets up its browser state once per class, so tests stay short and independent."""
+"""Base test classes. Each sets up its browser state once per class, so tests stay short and independent.
+
+Set SLOW_STORAGE=1 to make the browser's storage slow (as on a busy CI runner) for every test.
+"""
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,6 +18,14 @@ navigator.share = (d) => { window.__shared = { names: d.files.map(f => f.name), 
 """
 NO_SHARE_SHEET = "delete Navigator.prototype.canShare; delete Navigator.prototype.share;"
 
+# Delays every IndexedDB transaction by 300 ms, to expose tests that assume storage is instant.
+SLOW_STORAGE = """
+const d = Object.getOwnPropertyDescriptor(IDBTransaction.prototype, 'oncomplete');
+Object.defineProperty(IDBTransaction.prototype, 'oncomplete', {
+  set(fn) { d.set.call(this, fn && (e => setTimeout(() => fn.call(this, e), 300))); },
+  get() { return d.get.call(this); } });
+"""
+
 
 class BrowserTest(unittest.TestCase):
     """A fresh browser context per test class, plus an offline one for opening envelopes."""
@@ -27,6 +39,8 @@ class BrowserTest(unittest.TestCase):
         context = app.browser().new_context(accept_downloads=True, **options)
         if cls.init_script:
             context.add_init_script(cls.init_script)
+        if os.environ.get("SLOW_STORAGE"):
+            context.add_init_script(SLOW_STORAGE)
         cls.addClassCleanup(context.close)
         return context
 

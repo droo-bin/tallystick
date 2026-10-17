@@ -1167,7 +1167,7 @@ function scheduleSave(){
   if (!READY || S.step >= 5) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(function(){
-    if (S.step >= 5) return;
+    if (S.step >= 5 || (S.step === 0 && !S.owner.trim())) return;  // nothing worth keeping yet
     DB.putDraft(snapshot()).catch(function(){});
   }, 400);
 }
@@ -1193,7 +1193,7 @@ function rememberSealing(envs, people, owner, when){
     created: Date.now(), sealed: when, owner: owner,
     holders: people.map(function(p){ return { name: p.name.trim(), role: p.role }; }),
     envelopes: envs.map(function(e){ return { name: e.name, k: e.k, n: e.holders.length, fileName: fileName(e, owner), html: e.html }; })
-  }).then(drawHistory).catch(function(){});
+  }).then(drawHistory).catch(function(){}).then(function(){ document.documentElement.setAttribute('data-history-saved', ''); });
 }
 function drawHistory(){
   return DB.listHistory().then(function(list){
@@ -1232,8 +1232,7 @@ function start(draft){
   go.initial = true;
   go(resumed ? Math.min(draft.state.step, 4) : 0);
   if (resumed) showResumed(draft.savedAt);
-  drawHistory();
-  document.documentElement.setAttribute('data-ready', '');
+  drawHistory().then(function(){ document.documentElement.setAttribute('data-ready', ''); });
 }
 var startTimeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2000); });
 Promise.race([DB.getDraft(), startTimeout]).catch(function(){ return null; }).then(start);

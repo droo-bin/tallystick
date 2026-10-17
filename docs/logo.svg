@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Tallystick logo: two halves of a split tally stick">
+  <title>Tallystick</title>
+  <!-- Same mark as the app icon (src/make_icons.py): two halves of a tally stick, notched across both. -->
+  <rect width="512" height="512" rx="113" fill="#1F5E57"/>
+  <rect x="148.1" y="119.5" width="95.2" height="273" rx="20.9" fill="#F3F5F2"/>
+  <rect x="276.3" y="127.1" width="80" height="257.8" rx="13.3" fill="none" stroke="#F3F5F2" stroke-width="15.2"/>
+  <rect x="146" y="212.3" width="220" height="13.7" fill="#1F5E57"/>
+  <rect x="146" y="277.9" width="220" height="13.7" fill="#1F5E57"/>
+</svg>

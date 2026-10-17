@@ -1,6 +1,13 @@
-# Tallystick
+<p align="center">
+  <img src="docs/logo.svg" width="112" height="112" alt="Tallystick logo: two halves of a split tally stick">
+</p>
 
-Leave your affairs in order, sealed for the people you trust. Free, private, offline.
+<h1 align="center">Tallystick</h1>
+
+<p align="center">Leave your affairs in order, sealed for the people you trust.<br>Free, private, offline.</p>
+
+Medieval tally sticks were split in two, and only the matching halves could prove a record. Tallystick does the
+same with a key: it's split between the people you choose, and only enough of them together can open what you leave.
 
 ## Two ways to use it
 
@@ -31,6 +38,7 @@ Nothing is ever sent to the host: the service worker only serves the app's own f
 node build.js                                        # builds dist/tallystick.html and dist/pwa/
 node --test test/crypto.test.js                      # crypto core (no installs needed)
 python3 -m unittest discover -s test -p "test_*.py"  # browser tests
+SLOW_STORAGE=1 python3 -m unittest discover -s test -p "test_*.py"  # again, with slow browser storage
 ```
 
 The browser tests need `pip install playwright pillow numpy opencv-python-headless` and

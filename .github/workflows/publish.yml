@@ -47,6 +47,11 @@ jobs:
       - name: Browser tests (both builds, phone layout, accessibility, saving progress, media)
         run: python -m unittest discover -s test -p "test_*.py" -v
 
+      - name: Browser tests again with slow storage (catches timing assumptions)
+        env:
+          SLOW_STORAGE: '1'
+        run: python -m unittest discover -s test -p "test_*.py"
+
       - name: Prepare site
         run: |
           mkdir -p site

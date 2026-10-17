@@ -56,6 +56,7 @@ class InstallableAppTests(PhoneTest):
         controlled(page)
         context.set_offline(True)
         page.reload()
+        page.wait_for_selector("html[data-ready]", state="attached")
         page.fill("#owner", "Sam Taylor")
         self.assertTrue(page.is_enabled("#next"))
 

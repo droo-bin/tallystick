@@ -63,8 +63,14 @@ def pwa_url():
         server = socketserver.TCPServer(("127.0.0.1", 0), handler)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         _state["server"] = server
-        atexit.register(server.shutdown)
+        atexit.register(_stop_server)
     return f"http://127.0.0.1:{_state['server'].server_address[1]}/"
+
+
+def _stop_server():
+    server = _state.pop("server")
+    server.shutdown()
+    server.server_close()
 
 
 def single_file_url():

@@ -11,6 +11,13 @@
 Medieval tally sticks were split in two, and only the matching halves could prove a record. Tallystick does the
 same with a key: it's split between the people you choose, and only enough of them together can open what you leave.
 
+## Everything stays on your device
+
+Tallystick runs entirely in your browser and works offline. There's no account, no server and no tracking:
+what you write, the files you add and your sealed envelopes are never uploaded. The single offline file's
+security rules block every network connection, and the installable app's rules only let it load its own files.
+You can check this yourself by switching on airplane mode before you start: everything works the same.
+
 ## Two ways to use it
 
 - **Online, installable:** [tallystick.org.uk](https://tallystick.org.uk/). Open it on your phone or computer and add it to your home screen. After the first visit it works with no connection, and nothing you type is ever sent anywhere.
@@ -59,6 +66,7 @@ drive both builds in a headless browser.
 | `test/test_media.py` | Voice notes and videos play while drafting and in opened envelopes |
 | `test/test_accessibility.py` | Keyboard use, focus, headings, names and announcements |
 | `test/test_installable_app.py` | Install metadata, offline use and phone layout |
+| `test/test_insecure_page.py` | A plain http:// page warns up front instead of failing at sealing |
 | `test/test_qr.py` | QR codes decode with an independent reader |
 
 Shared helpers live in `test/support/`: `app.py` (builds, browser, local server), `pages.py`

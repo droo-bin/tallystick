@@ -33,6 +33,10 @@
   <span id="resumed-text"></span>
   <button type="button" class="link" id="start-over">Start over</button>
 </div>
+<div class="note warn insecure" id="insecure" role="alert" hidden>
+  <strong>This page isn't secure, so Tallystick can't seal anything here.</strong>
+  <span>Your browser only allows the encryption Tallystick uses on secure pages. <a id="secure-link" href="" hidden>Open the secure version</a></span>
+</div>
 <!-- 0. Welcome -->
 <section class="screen" id="screen-0">
   <div class="intro">
@@ -44,9 +48,24 @@
     <li><span class="tally" aria-hidden="true"><i></i><i></i></span><div><strong>Choose your card holders</strong><span>Each gets a card. No one can open it alone.</span></div></li>
     <li><span class="tally" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>Seal it</strong><span>Keep copies anywhere. It opens when enough cards come together.</span></div></li>
   </ol>
+  <section class="private" aria-labelledby="private-h">
+    <svg class="private-icon" viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="4" width="22" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M15 21v-3a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="13" y="20" width="14" height="10" rx="2" fill="currentColor"/></svg>
+    <div>
+      <h2 id="private-h">Everything stays on your device</h2>
+      <p>Tallystick works completely offline. What you write is sealed here, in this browser, and is never uploaded. There's no account, no server and no tracking, so there's nowhere for it to go.</p>
+      <ul class="private-points">
+        <li>Works with no internet</li>
+        <li>Nothing is ever uploaded</li>
+        <li>No account or sign-up</li>
+        <li>Even we can't open your envelopes</li>
+      </ul>
+      <p class="net" id="net-status" role="status" aria-live="polite">Try it: switch on airplane mode and carry on. Everything still works.</p>
+      <a href="#how-safe" class="opens" data-opens="how-safe">How your envelopes are protected</a>
+    </div>
+  </section>
   <div class="panel">
     <div class="field"><label for="owner">Your full name</label><input type="text" id="owner" class="big-input" autocomplete="name" autocapitalize="words" placeholder="e.g. Sam Taylor"></div>
-    <div class="facts"><span>Stays on this device</span><span>No account</span><span>Free</span><span>About 20 minutes</span></div>
+    <div class="facts"><span>Free</span><span>Works offline</span><span>About 20 minutes</span></div>
   </div>
   <p class="hint" id="draft-hint">Your answers are kept on this device as you go, so you can close this page and come back. They're deleted once you seal.</p>
   <section class="panel" id="history" hidden aria-labelledby="history-h">
@@ -178,16 +197,22 @@
   <summary><h2>How your envelopes are protected</h2></summary>
   <div class="explain-body">
     <section>
+      <h3>Nothing leaves your device</h3>
+      <p>Tallystick does all its work inside your browser, on your own phone or computer. There's no account, no server and no tracking. What you type, the files you add and your finished envelopes are never uploaded anywhere, and nobody else can open your envelopes, including the people who make Tallystick.</p>
+      <ul>
+        <li><strong>It works offline.</strong> Once the page has loaded, it needs no internet at all. The downloadable file is built so it can't connect to anything.</li>
+        <li><strong>Your draft stays in this browser.</strong> It's kept on this device so you can come back to it, and deleted when you seal.</li>
+        <li><strong>You decide where envelopes go.</strong> They're ordinary files that you save, print or share yourself.</li>
+        <li><strong>You can check.</strong> Switch on airplane mode before you start, or save the offline file and open it with the internet off. Everything works the same.</li>
+      </ul>
+    </section>
+    <section>
       <h3>It's locked with a key only your cards can rebuild</h3>
       <p>When you seal an envelope, Tallystick makes a long random key and uses it to scramble everything inside. It uses AES-256, the same kind of encryption banks and governments rely on. Without the key, the file is meaningless noise. Guessing the key would take every computer on Earth far longer than the age of the universe.</p>
     </section>
     <section>
       <h3>The key is split between your card holders</h3>
       <p>The key is never written down whole. It's cut into pieces, one per card, using a well-tested method called Shamir's secret sharing. Think of a map torn so that any three pieces show the way, but two pieces show nothing at all. Fewer cards than you chose don't reveal part of the secret. They reveal nothing.</p>
-    </section>
-    <section>
-      <h3>Nothing leaves your device</h3>
-      <p>There's no account and no server. Everything is done in your browser, and the app is built so it can't connect to the internet. Nobody else can open your envelopes, including the people who made Tallystick.</p>
     </section>
     <section>
       <h3>Mistakes and damage are caught</h3>
@@ -738,6 +763,7 @@ function placeList(){
 var READY = false;
 function validate(){
   if (!READY) { $('next').disabled = true; return; }
+  if (!Tally.cryptoAvailable()) { $('next').disabled = true; $('foot-msg').textContent = 'This page isn\'t secure. See the message at the top.'; return; }
   var ok = true, msg = '';
   if (S.step === 0) { ok = !!S.owner.trim(); msg = ok ? '' : 'Enter your name to start.'; }
   if (S.step === 2) { ok = namedPeople().length >= 2; msg = ok ? '' : 'Add at least two people.'; }
@@ -1264,6 +1290,14 @@ function drawHistory(){
 
 /* ---------- start ---------- */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+function showInsecure(){
+  $('insecure').hidden = false;
+  var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  if (location.protocol === 'http:' && !local) {
+    $('secure-link').href = 'https://' + location.host + location.pathname;
+    $('secure-link').hidden = false;
+  }
+}
 function start(draft){
   var resumed = restore(draft);
   buildSections();
@@ -1271,18 +1305,31 @@ function start(draft){
   $('owner').value = S.owner;
   $('copies-other').value = S.otherPlace;
   READY = true;
+  if (!Tally.cryptoAvailable()) showInsecure();
   go.initial = true;
   go(resumed ? Math.min(draft.state.step, 4) : 0);
   if (resumed) showResumed(draft.savedAt);
   drawHistory().then(function(){ document.documentElement.setAttribute('data-ready', ''); });
 }
-$('terms-link').addEventListener('click', function(e){
-  e.preventDefault();
-  var terms = $('terms');
-  terms.open = true;
-  terms.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  terms.querySelector('summary').focus();
+function openSection(id){
+  var d = $(id);
+  d.open = true;
+  d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  d.querySelector('summary').focus();
+}
+$('terms-link').addEventListener('click', function(e){ e.preventDefault(); openSection('terms'); });
+document.querySelectorAll('a[data-opens]').forEach(function(a){
+  a.addEventListener('click', function(e){ e.preventDefault(); openSection(a.getAttribute('data-opens')); });
 });
+function showConnection(){
+  $('net-status').textContent = navigator.onLine
+    ? 'Try it: switch on airplane mode and carry on. Everything still works.'
+    : 'You\'re offline right now, and everything still works.';
+  $('net-status').classList.toggle('is-offline', !navigator.onLine);
+}
+window.addEventListener('online', showConnection);
+window.addEventListener('offline', showConnection);
+showConnection();
 var startTimeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2000); });
 Promise.race([DB.getDraft(), startTimeout]).catch(function(){ return null; }).then(start);
 })();

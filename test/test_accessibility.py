@@ -118,6 +118,22 @@ class KeyboardTests(BrowserTest):
         self.assertIn("any three pieces show the way, but two pieces show nothing", text)
         self.assertIn("Nothing leaves your device", text)
 
+    def test_offline_promise_leads_the_welcome_screen_and_links_to_the_details(self):
+        page = self.creator().page
+        self.assertIn("Everything stays on your device", page.inner_text(".private"))
+        page.get_by_role("link", name="How your envelopes are protected").press("Enter")
+        self.assertTrue(page.locator("#how-safe").evaluate("d => d.open"))
+        self.assertEqual(focused(page)["text"], "How your envelopes are protected")
+        first = page.locator("#how-safe .explain-body h3").first.inner_text()
+        self.assertEqual(first, "Nothing leaves your device")
+
+    def test_going_offline_is_noticed_and_reassures(self):
+        creator = self.creator()
+        creator.page.context.set_offline(True)
+        creator.page.locator("#net-status.is-offline").wait_for()
+        self.assertIn("You're offline right now, and everything still works", creator.page.inner_text("#net-status"))
+        creator.page.context.set_offline(False)
+
     def test_terms_link_opens_the_disclaimer_and_moves_focus_to_it(self):
         page = self.creator().page
         self.assertIn("Not a will or legal advice", page.inner_text(".legal-line"))

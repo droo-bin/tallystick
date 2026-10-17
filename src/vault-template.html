@@ -192,6 +192,10 @@ video{max-width:100%;border-radius:10px;background:#000}
   }
 
   function showError(t){ $('error').textContent = t; $('error').hidden = !t; }
+  if (!Tally.cryptoAvailable()) {
+    showError('This page isn\'t secure, so your browser has switched off the encryption needed to open it. Save this file to your device and open it from there.');
+    $('open').disabled = true;
+  }
 
   $('open').addEventListener('click', async function(){
     showError('');

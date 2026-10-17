@@ -21,7 +21,16 @@ var Tally = (function () {
     return a === 0 ? 0 : EXP[(LOG[a] + 255 - LOG[b]) % 255];
   }
 
-  function randomBytes(n) { var b = new Uint8Array(n); crypto.getRandomValues(b); return b; }
+  /* Browsers only offer Web Crypto on secure pages (https, localhost or a local file). */
+  var INSECURE = 'This page isn\'t secure, so your browser has switched off the encryption Tallystick needs. ' +
+    'Open it from an https:// address, or save the file and open it from your device.';
+  function cryptoAvailable() {
+    var c = typeof crypto !== 'undefined' ? crypto : null;
+    return !!(c && c.subtle && typeof c.getRandomValues === 'function');
+  }
+  function subtle() { if (!cryptoAvailable()) throw new Error(INSECURE); return crypto.subtle; }
+
+  function randomBytes(n) { subtle(); var b = new Uint8Array(n); crypto.getRandomValues(b); return b; }
 
   /* ---------- Shamir secret sharing, byte by byte ---------- */
   // Returns n shares; share i has x = i (1..n) and y = one byte per secret byte.
@@ -80,7 +89,7 @@ var Tally = (function () {
   }
   var enc = new TextEncoder(), dec = new TextDecoder();
 
-  async function sha256(u8) { return new Uint8Array(await crypto.subtle.digest('SHA-256', u8)); }
+  async function sha256(u8) { return new Uint8Array(await subtle().digest('SHA-256', u8)); }
 
   /* ---------- card codes ----------
      Bytes: [version=1][vault id, 8][k][n][x][key share, 32][checksum, 4 = first 4 bytes of SHA-256 of the rest]
@@ -130,16 +139,16 @@ var Tally = (function () {
   }
 
   /* ---------- AES-256-GCM. Ciphertext = [12-byte IV][ciphertext+tag]. AAD = "tallystick-v1:" + vault id ---------- */
-  async function importKey(raw) { return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']); }
+  async function importKey(raw) { return subtle().importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']); }
   async function encrypt(key32, vaultIdHex, plain) {
     var iv = randomBytes(12), key = await importKey(key32);
-    var ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, additionalData: enc.encode('tallystick-v1:' + vaultIdHex) }, key, plain));
+    var ct = new Uint8Array(await subtle().encrypt({ name: 'AES-GCM', iv: iv, additionalData: enc.encode('tallystick-v1:' + vaultIdHex) }, key, plain));
     var out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12);
     return out;
   }
   async function decrypt(key32, vaultIdHex, blob) {
     var key = await importKey(key32);
-    return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: blob.subarray(0, 12), additionalData: enc.encode('tallystick-v1:' + vaultIdHex) }, key, blob.subarray(12)));
+    return new Uint8Array(await subtle().decrypt({ name: 'AES-GCM', iv: blob.subarray(0, 12), additionalData: enc.encode('tallystick-v1:' + vaultIdHex) }, key, blob.subarray(12)));
   }
 
   /* ---------- high level ---------- */
@@ -195,7 +204,7 @@ var Tally = (function () {
   }
   function isBlankHTML(html) { return !String(html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(); }
 
-  return { cleanHTML: cleanHTML, isBlankHTML: isBlankHTML, split: split, combine: combine, encodeShare: encodeShare, decodeShare: decodeShare,
+  return { cryptoAvailable: cryptoAvailable, cleanHTML: cleanHTML, isBlankHTML: isBlankHTML, split: split, combine: combine, encodeShare: encodeShare, decodeShare: decodeShare,
            pack: pack, unpack: unpack, encrypt: encrypt, decrypt: decrypt,
            makeVault: makeVault, openVault: openVault, openRaw: openRaw, sha256: sha256, toHex: toHex, fromHex: fromHex,
            toB64: toB64, fromB64: fromB64, randomBytes: randomBytes, gmul: gmul, gdiv: gdiv };

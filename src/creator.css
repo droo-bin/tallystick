@@ -106,6 +106,17 @@ button:focus-visible,summary:focus-visible,a:focus-visible,label.small:focus-wit
 .how .tally i{width:5px;height:26px;border-radius:3px;background:var(--accent)}
 .how strong{display:block;font-size:17px}
 .how span{color:var(--muted);font-size:16px}
+.private{display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:start;background:var(--soft);border-radius:var(--r-lg);padding:20px;margin:24px 0}
+.private-icon{width:40px;height:40px;color:var(--accent)}
+.private h2{font:600 19px/1.3 var(--body);letter-spacing:0;margin:2px 0 6px}
+.private p{font-size:16px;color:var(--muted);margin:0}
+.private-points{list-style:none;margin:14px 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.private-points li{font-size:15px;font-weight:600;padding-left:26px;position:relative}
+.private-points li::before{content:"";position:absolute;left:0;top:.15em;width:18px;height:18px;border-radius:50%;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center/14px}
+.private .net{font-size:15px;margin-bottom:10px}
+.private .net.is-offline{color:var(--good);font-weight:600}
+.private .opens{color:var(--accent);font-weight:600;font-size:15px}
+@media (max-width:420px){.private{grid-template-columns:1fr;padding:18px}.private-points{grid-template-columns:1fr}}
 .facts{display:flex;flex-wrap:wrap;gap:8px}
 .facts span{font-size:14px;color:var(--muted);background:var(--sunk);border-radius:var(--r-pill);padding:6px 12px}
 
@@ -115,6 +126,9 @@ button:focus-visible,summary:focus-visible,a:focus-visible,label.small:focus-wit
 .tips li::before{content:"";position:absolute;left:0;top:.45em;width:4px;height:.9em;border-radius:2px;background:var(--accent)}
 .note{padding:14px 16px;border-radius:var(--r-md);font-size:15px;background:var(--soft)}
 .note.warn{background:var(--warn-bg);color:var(--warn)}
+.insecure{display:flex;flex-direction:column;gap:4px;margin-bottom:20px}
+.insecure[hidden]{display:none}
+.insecure a{color:inherit;font-weight:600}
 
 /* Affairs sections */
 details.sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}

@@ -185,7 +185,7 @@
       <div class="body" id="cards-wrap">
         <h2>Print the cards</h2>
         <p id="cards-sub"></p>
-        <div class="row"><button type="button" id="print-cards">Print cards</button><button type="button" class="ghost" id="save-cards">Save cards as a file</button></div>
+        <div class="row"><button type="button" id="print-cards">Print cards</button><span id="save-cards"></span></div>
         <details class="more"><summary>Preview the cards</summary><div class="cards" id="cards"></div></details>
       </div>
     </div>
@@ -1151,7 +1151,7 @@ function save(name, text){
 function saveMenu(label, files, opts){
   opts = opts || {};
   var saved = {};
-  function done(name){ saved[name] = true; if (opts.onAllSaved && files.every(function(f){ return saved[f.name]; })) opts.onAllSaved(); }
+  function done(name){ saved[name] = true; if (opts.onAnySaved) opts.onAnySaved(); if (opts.onAllSaved && files.every(function(f){ return saved[f.name]; })) opts.onAllSaved(); }
   var list = el('div', { 'class': 'menu-list', role: 'menu' });
   var menu = el('details', { 'class': 'menu' + (opts.alignEnd ? ' end' : '') }, [
     el('summary', { 'class': opts.primary ? 'menu-btn primary' : 'menu-btn', 'aria-label': opts.ariaLabel || label, text: label }), list]);
@@ -1166,9 +1166,14 @@ function saveMenu(label, files, opts){
       if (!shareFiles(files.map(function(f){ return { name: f.name, text: f.html }; })))
         files.forEach(function(f, i){ setTimeout(function(){ save(f.name, f.html); }, i * 400); });
       files.forEach(function(f){ done(f.name); }); menu.open = false;
-    } }, [el('span', { text: 'Save all' }), el('span', { 'class': 'menu-size', text: files.length + ' files' })]));
+    } }, [el('span', { text: opts.allLabel || 'Save all' }), el('span', { 'class': 'menu-size', text: files.length + ' files' })]));
     list.appendChild(el('p', { 'class': 'menu-note', text: 'Your browser may ask to allow several downloads.' }));
   }
+  (opts.extra || []).forEach(function(f){
+    list.appendChild(el('button', { type: 'button', role: 'menuitem', 'aria-label': 'Save ' + f.label, onclick: function(){
+      save(f.name, f.html); if (opts.onAnySaved) opts.onAnySaved(); menu.open = false;
+    } }, [el('span', { text: f.label }), el('span', { 'class': 'menu-size', text: size(f.html.length) })]));
+  });
   menu.addEventListener('toggle', function(){ if (menu.open && document.activeElement === menu.querySelector('summary')) list.querySelector('[role=menuitem]').focus(); });
   menu.querySelector('summary').addEventListener('keydown', function(e){
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); menu.open = true; var items = list.querySelectorAll('[role=menuitem]'); items[e.key === 'ArrowDown' ? 0 : items.length - 1].focus(); }
@@ -1253,14 +1258,18 @@ async function drawCards(envs, people, owner, places){
       '.share{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding-top:12px;border-top:1px dashed #999}.share svg{width:120px;height:120px}code{font:12px/1.5 monospace;word-break:break-all}small{font-size:13px}</style></head><body>' + inner + '</body></html>';
   }
   var safeOwner = owner.replace(/[\\/:*?"<>|]+/g, '');
-  $('save-cards').onclick = function(){
-    save('Tallystick cards - ' + safeOwner + '.html', cardPage('Tallystick cards - ' + owner, html));
-    markDone('task-print');
-  };
-  drawSend(people, function(p){
+  function cardFile(p){
     return { name: 'Tallystick card - ' + p.name.trim().replace(/[\\/:*?"<>|]+/g, '') + '.html',
       html: cardPage('Tallystick card for ' + p.name.trim(), cardMarkup(p, envs, owner, places)) };
-  }, function(p){
+  }
+  // One file per card holder, so each person only ever gets their own card; one combined file for printing at home.
+  var perPerson = people.map(function(p){ var f = cardFile(p); return { label: p.name.trim() + '\u2019s card', name: f.name, html: f.html }; });
+  var host = $('save-cards'); host.innerHTML = '';
+  host.appendChild(saveMenu('Save cards', perPerson, {
+    ariaLabel: 'Save cards', allLabel: 'Save each card separately', onAnySaved: function(){ markDone('task-print'); },
+    extra: [{ label: 'All cards in one file (for printing)', name: 'Tallystick cards - ' + safeOwner + '.html', html: cardPage('Tallystick cards - ' + owner, html) }]
+  }));
+  drawSend(people, cardFile, function(p){
     return envs.filter(function(e){ return e.holders.indexOf(p.id) >= 0; })
       .map(function(e){ return { label: e.name, name: fileName(e, owner), html: e.html }; });
   }, owner);
@@ -1485,6 +1494,20 @@ function setStepTabs(){ Array.prototype.forEach.call(document.querySelectorAll('
   if (hoverWide.matches) li.setAttribute('tabindex', '0'); else li.removeAttribute('tabindex'); }); }
 setStepTabs();
 if (hoverWide.addEventListener) hoverWide.addEventListener('change', setStepTabs);
+// Keep a step's example on screen: centred on the step, but never under the sticky top bar or the footer.
+function placeExample(li){
+  var fig = li.querySelector('.example'); if (!fig || !hoverWide.matches) return;
+  fig.style.setProperty('--nudge', '0px');
+  var r = fig.getBoundingClientRect(), bar = document.querySelector('.top'), foot = document.querySelector('.foot');
+  var min = (bar ? bar.getBoundingClientRect().bottom : 0) + 12;
+  var max = (foot && foot.offsetParent ? foot.getBoundingClientRect().top : window.innerHeight) - 12;
+  var shift = r.top < min ? min - r.top : r.bottom > max ? Math.max(min - r.top, max - r.bottom) : 0;
+  fig.style.setProperty('--nudge', Math.round(shift) + 'px');
+}
+Array.prototype.forEach.call(document.querySelectorAll('.how > li'), function(li){
+  li.addEventListener('mouseenter', function(){ placeExample(li); });
+  li.addEventListener('focus', function(){ placeExample(li); });
+});
 Array.prototype.forEach.call(document.querySelectorAll('.example-btn'), function(btn){
   btn.addEventListener('click', function(){
     var li = btn.closest('li'), open = !li.classList.contains('open');

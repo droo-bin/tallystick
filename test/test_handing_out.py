@@ -72,5 +72,31 @@ class WithoutShareSheetTests(SealedHouseholdTest):
         self.assertRegex(card, r"Created \d{1,2} \w+ \d{4}")
 
 
+class PrintCardsTests(SealedHouseholdTest):
+    """Step 2 saves one file per card holder, so nobody is handed someone else's card."""
+    household = PAIR
+    init_script = NO_SHARE_SHEET
+
+    @property
+    def menu(self):
+        return self.page.locator("#save-cards details.menu")
+
+    def test_menu_lists_a_card_per_person_then_all_of_them(self):
+        self.assertEqual(self.finish.menu_items(self.menu), [
+            f"Save \u2013 {JO.name}\u2019s card", f"Save \u2013 {PAT.name}\u2019s card",
+            "Save each card separately", "All cards in one file (for printing)"])
+
+    def test_saving_one_persons_card_gives_only_their_card(self):
+        path = self.finish._download(self.menu, f"Save {JO.name}\u2019s card", self.folder)
+        card = path.read_text()
+        self.assertEqual(path.name, f"Tallystick card - {JO.name}.html")
+        self.assertEqual(card.count('class="card"'), 1)
+        self.assertIn(JO.name, card)
+
+    def test_one_file_with_every_card_is_still_available_for_printing(self):
+        path = self.finish._download(self.menu, "Save All cards in one file (for printing)", self.folder)
+        self.assertEqual(path.read_text().count('class="card"'), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

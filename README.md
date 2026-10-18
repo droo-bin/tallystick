@@ -63,6 +63,7 @@ drive both builds in a headless browser.
 | `test/test_sealing.py` | Sealing a household and opening every envelope, on both builds |
 | `test/test_handing_out.py` | Share and Save menus, with and without a share sheet |
 | `test/test_saving_progress.py` | Surviving a refresh, Start over, and the history of sealed envelopes |
+| `test/test_recording.py` | Recording voice notes and videos in the browser, through to playing them in opened envelopes |
 | `test/test_media.py` | Voice notes and videos play while drafting and in opened envelopes |
 | `test/test_accessibility.py` | Keyboard use, focus, headings, names and announcements |
 | `test/test_installable_app.py` | Install metadata, offline use and phone layout |

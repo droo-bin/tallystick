@@ -191,6 +191,17 @@ video{max-width:100%;border-radius:10px;background:#000}
     f.appendChild(l); f.appendChild(inp); $('fields').appendChild(f); inputs.push(inp);
   }
 
+  // Recordings made in the browser (WebM) don't say how long they are. Seeking far past the end once makes the
+  // browser work it out, so the player shows the full length and can be scrubbed; then it goes back to the start.
+  function fixDuration(m){
+    m.addEventListener('loadedmetadata', function(){
+      if (m.duration !== Infinity) return;
+      var back = function(){ m.removeEventListener('durationchange', back); m.currentTime = 0; };
+      m.addEventListener('durationchange', back);
+      m.currentTime = 1e101;
+    });
+    return m;
+  }
   function showError(t){ $('error').textContent = t; $('error').hidden = !t; }
   if (!Tally.cryptoAvailable()) {
     showError('This page isn\'t secure, so your browser has switched off the encryption needed to open it. Save this file to your device and open it from there.');
@@ -254,7 +265,7 @@ video{max-width:100%;border-radius:10px;background:#000}
     // The browser's own audio and video players. The page's security policy allows blob: media only.
     function media(url, info, label){
       var m = el(/^video\//.test(info.type) ? 'video' : 'audio', null, 'player');
-      m.controls = true; m.preload = 'metadata'; m.setAttribute('playsinline', ''); m.src = url;
+      m.controls = true; m.preload = 'metadata'; m.setAttribute('playsinline', ''); fixDuration(m); m.src = url;
       m.setAttribute('aria-label', label || info.name);
       return m;
     }

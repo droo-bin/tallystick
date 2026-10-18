@@ -31,7 +31,7 @@ def browser():
     if "browser" not in _state:
         ensure_built()
         pw = sync_playwright().start()
-        _state["pw"], _state["browser"] = pw, pw.chromium.launch()
+        _state["pw"], _state["browser"] = pw, pw.chromium.launch(args=["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"])
         atexit.register(_close_browser)
     return _state["browser"]
 

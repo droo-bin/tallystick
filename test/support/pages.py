@@ -114,6 +114,16 @@ class CreatorPage:
     def section_status(self, heading):
         return self.section(heading).locator("summary .count").inner_text()
 
+    def record(self, button_name, seconds=1.5):
+        """Presses a Voice note or Video button, records for a moment with the browser's fake camera and mic, and keeps it."""
+        self.page.get_by_role("button", name=button_name).click()
+        dialog = self.page.locator("#recorder")
+        dialog.get_by_role("button", name="Start recording").click()
+        self.page.wait_for_timeout(int(seconds * 1000))
+        dialog.get_by_role("button", name="Stop").click()
+        dialog.get_by_role("button", name="Keep it").click()
+        dialog.wait_for(state="hidden")
+
     def write_note(self, text):
         self.page.locator("#affairs-letter .rt").click()
         self.page.keyboard.type(text)

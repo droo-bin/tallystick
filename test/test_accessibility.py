@@ -144,6 +144,19 @@ class KeyboardTests(BrowserTest):
         self.assertIn("You're offline right now, and everything still works", creator.page.inner_text("#net-status"))
         creator.page.context.set_offline(False)
 
+    def test_how_it_works_examples_open_with_a_button_and_close_with_escape(self):
+        page = self.creator().page
+        btn = page.get_by_role("button", name="See an example").nth(1)
+        self.assertEqual(btn.get_attribute("aria-expanded"), "false")
+        btn.press("Enter")
+        self.assertEqual(page.get_by_role("button", name="Hide the example").get_attribute("aria-expanded"), "true")
+        self.assertTrue(page.locator("#ex-card").is_visible())
+        self.assertIn("printed card", page.locator("#ex-card img").get_attribute("alt"))
+        self.assertGreater(page.locator("#ex-card img").evaluate("i => i.naturalWidth"), 0)
+        page.keyboard.press("Escape")
+        self.assertEqual(page.locator(".how li.open").count(), 0)
+        self.assertEqual(focused(page)["text"], "See an example")
+
     def test_terms_link_opens_the_disclaimer_and_moves_focus_to_it(self):
         page = self.creator().page
         self.assertIn("Not a will or legal advice", page.inner_text(".legal-line"))

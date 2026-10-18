@@ -46,10 +46,17 @@
   </div>
   <div class="how-card">
   <h2 class="how-h" id="how-h">How it works</h2>
+  <p class="how-hint" aria-hidden="true">Point at a step to see an example</p>
   <ol class="how" aria-labelledby="how-h">
-    <li><span class="tally" aria-hidden="true"><i></i></span><div><strong>Write it down</strong><span>Accounts, policies, wishes and where things are. Tap to add, skip what you don't know.</span></div></li>
-    <li><span class="tally" aria-hidden="true"><i></i><i></i></span><div><strong>Choose your card holders</strong><span>Each gets a card. No one can open it alone.</span></div></li>
-    <li><span class="tally" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>Seal it</strong><span>Keep copies anywhere. It opens when enough cards come together.</span></div></li>
+    <li tabindex="0" aria-describedby="ex-write"><span class="tally" aria-hidden="true"><i></i></span><div><strong>Write it down</strong><span>Accounts, policies, wishes and where things are. Tap to add, skip what you don't know.</span>
+      <button type="button" class="example-btn" aria-expanded="false" aria-controls="ex-write">See an example</button></div>
+      <figure class="example" id="ex-write"><img src="%%EX_WRITE%%" width="520" height="560" alt="Example of filling in the Money section: Nationwide savings with a note, an ISA held with Vanguard and a mortgage with Halifax, with suggestions to tap for more."><figcaption>Tap a suggestion and add a detail or two.</figcaption></figure></li>
+    <li tabindex="0" aria-describedby="ex-card"><span class="tally" aria-hidden="true"><i></i><i></i></span><div><strong>Choose your card holders</strong><span>Each gets a card. No one can open it alone.</span>
+      <button type="button" class="example-btn" aria-expanded="false" aria-controls="ex-card">See an example</button></div>
+      <figure class="example" id="ex-card"><img src="%%EX_CARD%%" width="520" height="410" alt="Example of a printed card for Jo Smith: a QR code and a typed code for each envelope, saying any 2 of the 3 cards are needed and who holds the others."><figcaption>A card for Jo Smith. On its own it opens nothing.</figcaption></figure></li>
+    <li tabindex="0" aria-describedby="ex-envelope"><span class="tally" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>Seal it</strong><span>Keep copies anywhere. It opens when enough cards come together.</span>
+      <button type="button" class="example-btn" aria-expanded="false" aria-controls="ex-envelope">See an example</button></div>
+      <figure class="example" id="ex-envelope"><img src="%%EX_ENVELOPE%%" width="520" height="618" alt="Example of a sealed envelope file opened in a browser: Affairs, left by Sam Taylor, asking for any 2 of the 3 card codes to open it."><figcaption>The envelope is one file that opens in any browser.</figcaption></figure></li>
   </ol>
   </div>
   <section class="private" aria-labelledby="private-h">
@@ -1471,6 +1478,27 @@ function start(draft){
   if (resumed) showResumed(draft.savedAt);
   drawHistory().then(function(){ document.documentElement.setAttribute('data-ready', ''); });
 }
+// "See an example" on each How it works step: hover or focus shows it on desktop, a tap shows it inline elsewhere.
+// On wide screens with a mouse, each step is a tab stop that shows its example; otherwise the button is used instead.
+var hoverWide = window.matchMedia('(hover: hover) and (min-width: 960px)');
+function setStepTabs(){ Array.prototype.forEach.call(document.querySelectorAll('.how > li'), function(li){
+  if (hoverWide.matches) li.setAttribute('tabindex', '0'); else li.removeAttribute('tabindex'); }); }
+setStepTabs();
+if (hoverWide.addEventListener) hoverWide.addEventListener('change', setStepTabs);
+Array.prototype.forEach.call(document.querySelectorAll('.example-btn'), function(btn){
+  btn.addEventListener('click', function(){
+    var li = btn.closest('li'), open = !li.classList.contains('open');
+    Array.prototype.forEach.call(document.querySelectorAll('.how li.open'), function(o){ if (o !== li) { o.classList.remove('open'); o.querySelector('.example-btn').setAttribute('aria-expanded', 'false'); o.querySelector('.example-btn').textContent = 'See an example'; } });
+    li.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? 'Hide the example' : 'See an example';
+  });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  var li = document.querySelector('.how li.open'); if (!li) return;
+  li.querySelector('.example-btn').click(); li.querySelector('.example-btn').focus();
+});
 function openSection(id){
   var d = $(id);
   d.open = true;

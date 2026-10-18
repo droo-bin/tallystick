@@ -110,11 +110,34 @@ button:focus-visible,summary:focus-visible,a:focus-visible,label.small:focus-wit
 .how-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px}
 .how-h{font:700 13px/1.3 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
 .how{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
-.how li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
-.how .tally{display:flex;gap:4px;height:24px;align-items:flex-end;padding-top:3px}
-.how .tally i{width:5px;height:22px;border-radius:3px;background:var(--accent)}
-.how strong{display:block;font-size:17px;margin-bottom:2px}
-.how span{color:var(--muted);font-size:15.5px;line-height:1.45}
+.how li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 16px;align-items:start;position:relative}
+.how .tally{display:flex;gap:3px;height:19px;align-items:center;margin-top:2px}
+.how .tally i{flex:none;width:4px;height:19px;border-radius:2px;background:var(--accent)}
+.how strong{display:block;font-size:17px;line-height:1.35;margin-bottom:2px}
+.how li>div>span{display:block;color:var(--muted);font-size:15.5px;line-height:1.45}
+.how .example-btn,.how .example-btn:hover,.how .example-btn:active,.how .example-btn:focus{background:none;box-shadow:none;color:var(--accent);-webkit-tap-highlight-color:transparent}
+.example-btn{margin-top:6px;padding:4px 0;min-height:32px;background:none;border:0;color:var(--accent);font:600 14px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.example{display:none;grid-column:1 / -1;margin:8px 0 0;max-width:380px}
+.how li.open .example{display:block}
+.example img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);box-shadow:0 12px 36px rgba(0,0,0,.22);background:#fff}
+.example figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+/* Steps are only focusable to show examples on wide pointer screens; elsewhere the button does it. */
+.how li:focus{outline:none}
+.how li:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:12px}
+.how-hint{display:none}
+/* With a mouse on a wide screen, pointing at (or tabbing to) a step shows its example beside the card. No clicking. */
+@media (hover:hover) and (min-width:960px){
+  .how-hint{display:block;font-size:13px;color:var(--muted);margin:-10px 0 14px}
+  .example-btn{display:none}
+  .how{gap:4px}
+  .how li{padding:10px 12px;margin:0 -12px;border-radius:12px;cursor:default;transition:background .15s}
+  .how li:hover,.how li:focus-visible{background:var(--sunk)}
+  .example{display:block;position:absolute;right:calc(100% + 30px);top:50%;width:340px;margin:0;z-index:4;
+    opacity:0;visibility:hidden;transform:translate(8px,-50%);transition:opacity .18s,transform .18s,visibility .18s;pointer-events:none}
+  .how li:hover .example,.how li:focus-visible .example{opacity:1;visibility:visible;transform:translate(0,-50%)}
+  .example figcaption{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;display:inline-block}
+}
+@media (prefers-reduced-motion:reduce){.example{transition:none}}
 .private{display:grid;grid-template-columns:40px minmax(0,1fr);gap:6px 14px;align-items:start;background:var(--soft);border-radius:var(--r-lg);padding:20px 22px}
 .private-icon{width:40px;height:40px;color:var(--accent);grid-row:span 2}
 .private h2{font:700 19px/1.3 var(--body);letter-spacing:0;margin:2px 0 6px}
